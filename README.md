@@ -1,8 +1,6 @@
 # MomOps - AI-Powered Baby Care Assistant
 
-**The Problem:** New parents struggle to track feeding, sleep, and diaper patterns while managing caregivers and remembering pediatrician advice. Existing apps are either too complex or lack intelligent insights.
-
-**The Solution:** MomOps is an AI-powered baby care assistant that tracks activities, analyzes patterns, and provides proactive recommendations. Built for new parents, working parents with nannies, and anyone managing infant care.
+New parents struggle to track feeding, sleep, and diaper patterns while managing caregivers and remembering pediatrician advice. Existing apps are either too complex or lack intelligent insights. MomOps is an AI-powered baby care assistant that tracks activities, analyzes patterns, and provides proactive recommendations. Built for new parents, working parents with nannies, and anyone managing infant care.
 
 **Built with:** React 18, Vite, CSS3, LocalStorage
 
