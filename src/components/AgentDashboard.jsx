@@ -12,10 +12,12 @@ function AgentDashboard({ activities, babyBirthDate, babyName, embedded }) {
     if (saved) {
       setGoals(JSON.parse(saved))
     }
-    
+  }, [])
+
+  useEffect(() => {
     // Generate autonomous recommendations
     generateRecommendations()
-  }, [activities, babyBirthDate])
+  }, [activities, babyBirthDate, babyName, goals])
 
   useEffect(() => {
     localStorage.setItem('babyGoals', JSON.stringify(goals))
