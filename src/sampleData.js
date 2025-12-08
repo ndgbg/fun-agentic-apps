@@ -18,24 +18,33 @@ export const generateSampleData = () => {
     return date.toISOString()
   }
   
+  // Create timestamp at specific time of day X days ago
+  const atTimeOnDay = (days, hour, minute = 0) => {
+    const date = new Date(now)
+    date.setDate(date.getDate() - days)
+    date.setHours(hour, minute, 0, 0)
+    return date.toISOString()
+  }
+  
   // Generate realistic feeding pattern (every 2-3 hours)
   const generateFeedings = (startDay, endDay) => {
     const feedings = []
     let id = Date.now() + Math.random() * 100000
     
     for (let day = startDay; day <= endDay; day++) {
-      // 6-8 feedings per day
-      const feedTimes = [1, 4, 7, 10, 13, 16, 19, 22] // hours of day
+      // 6-8 feedings per day at realistic times (7am-11pm)
+      const feedTimes = [7, 10, 13, 16, 19, 21, 23] // hours of day
       const numFeeds = 6 + Math.floor(Math.random() * 3)
       
       for (let i = 0; i < numFeeds; i++) {
         const hour = feedTimes[i]
+        const minute = Math.floor(Math.random() * 30)
         const feedType = Math.random() > 0.6 ? 'breast' : 'bottle'
         const feeding = {
           id: id++,
           type: 'feed',
           feedType,
-          timestamp: daysAgo(day, 24 - hour, Math.floor(Math.random() * 30))
+          timestamp: atTimeOnDay(day, hour, minute)
         }
         
         if (feedType === 'breast') {
@@ -62,18 +71,20 @@ export const generateSampleData = () => {
     let id = Date.now() + Math.random() * 100000
     
     for (let day = startDay; day <= endDay; day++) {
+      // Realistic nap times: morning, midday, afternoon, early evening
       const napTimes = [
-        { start: 9, duration: 30 + Math.floor(Math.random() * 60) },
-        { start: 12, duration: 60 + Math.floor(Math.random() * 90) },
-        { start: 15, duration: 30 + Math.floor(Math.random() * 45) },
-        { start: 18, duration: 20 + Math.floor(Math.random() * 40) }
+        { start: 9, duration: 30 + Math.floor(Math.random() * 60) },   // Morning nap
+        { start: 13, duration: 60 + Math.floor(Math.random() * 90) },  // Afternoon nap (longest)
+        { start: 16, duration: 30 + Math.floor(Math.random() * 45) },  // Late afternoon
+        { start: 19, duration: 20 + Math.floor(Math.random() * 40) }   // Early evening catnap
       ]
       
       const numNaps = 3 + Math.floor(Math.random() * 2)
       
       for (let i = 0; i < numNaps; i++) {
         const napTime = napTimes[i]
-        const startTime = daysAgo(day, 24 - napTime.start, Math.floor(Math.random() * 30))
+        const minute = Math.floor(Math.random() * 30)
+        const startTime = atTimeOnDay(day, napTime.start, minute)
         const endDate = new Date(startTime)
         endDate.setMinutes(endDate.getMinutes() + napTime.duration)
         
@@ -100,14 +111,16 @@ export const generateSampleData = () => {
       const numDiapers = 8 + Math.floor(Math.random() * 5)
       
       for (let i = 0; i < numDiapers; i++) {
-        const hour = Math.floor(Math.random() * 24)
+        // Spread throughout waking hours (6am-11pm)
+        const hour = 6 + Math.floor(Math.random() * 17)
+        const minute = Math.floor(Math.random() * 60)
         const types = ['pee', 'pee', 'pee', 'poop', 'both'] // More pee than poop
         
         diapers.push({
           id: id++,
           type: 'diaper',
           diaperType: types[Math.floor(Math.random() * types.length)],
-          timestamp: daysAgo(day, 24 - hour, Math.floor(Math.random() * 60)),
+          timestamp: atTimeOnDay(day, hour, minute),
           notes: Math.random() > 0.9 ? ['Diaper rash', 'Applied cream', 'Very wet', 'Blowout!'][Math.floor(Math.random() * 4)] : undefined
         })
       }
@@ -121,24 +134,25 @@ export const generateSampleData = () => {
     let id = Date.now() + Math.random() * 100000
     
     for (let day = startDay; day <= endDay; day++) {
-      // Daily vitamin D
+      // Daily vitamin D (usually given in morning)
       meds.push({
         id: id++,
         type: 'medication',
         medicationName: 'Vitamin D',
         dosage: '400 IU (1 drop)',
-        timestamp: daysAgo(day, 15, Math.floor(Math.random() * 60)),
+        timestamp: atTimeOnDay(day, 9, Math.floor(Math.random() * 60)),
         notes: 'Daily supplement'
       })
       
       // Occasional medications
       if (Math.random() > 0.85) {
+        const hour = 8 + Math.floor(Math.random() * 14) // Between 8am-10pm
         meds.push({
           id: id++,
           type: 'medication',
           medicationName: ['Tylenol', 'Gas drops', 'Gripe water'][Math.floor(Math.random() * 3)],
           dosage: ['2.5ml', '0.5ml', '5ml'][Math.floor(Math.random() * 3)],
-          timestamp: daysAgo(day, Math.floor(Math.random() * 24), Math.floor(Math.random() * 60)),
+          timestamp: atTimeOnDay(day, hour, Math.floor(Math.random() * 60)),
           notes: ['For teething', 'Fussy/gassy', 'Before bed', 'After feeding'][Math.floor(Math.random() * 4)]
         })
       }
@@ -152,30 +166,32 @@ export const generateSampleData = () => {
     let id = Date.now() + Math.random() * 100000
     
     for (let day = startDay; day <= endDay; day++) {
-      // Daily bath (evening)
+      // Daily bath (evening between 6-8pm)
       if (Math.random() > 0.3) {
+        const bathHour = 18 + Math.floor(Math.random() * 2)
         activities.push({
           id: id++,
           type: 'other',
           activityType: 'bath',
-          timestamp: daysAgo(day, 6, Math.floor(Math.random() * 60)),
+          timestamp: atTimeOnDay(day, bathHour, Math.floor(Math.random() * 60)),
           notes: ['Evening bath', 'Loved splashing', 'Quick bath', 'Bath with lavender'][Math.floor(Math.random() * 4)]
         })
       }
       
-      // Tummy time (2-3 times per day)
+      // Tummy time (2-3 times per day during waking hours)
       const tummyTimes = 2 + Math.floor(Math.random() * 2)
       for (let i = 0; i < tummyTimes; i++) {
+        const tummyHour = 10 + i * 4 // 10am, 2pm, 6pm
         activities.push({
           id: id++,
           type: 'other',
           activityType: 'tummytime',
-          timestamp: daysAgo(day, 8 + i * 4, Math.floor(Math.random() * 60)),
+          timestamp: atTimeOnDay(day, tummyHour, Math.floor(Math.random() * 60)),
           notes: [`${5 + Math.floor(Math.random() * 10)} minutes`, 'Did great!', 'Got frustrated', 'Lifted head'][Math.floor(Math.random() * 4)]
         })
       }
       
-      // Occasional activities
+      // Occasional activities during daytime
       if (Math.random() > 0.7) {
         const activityTypes = ['playtime', 'walk', 'reading', 'milestone']
         const activityType = activityTypes[Math.floor(Math.random() * activityTypes.length)]
@@ -186,24 +202,24 @@ export const generateSampleData = () => {
           milestone: ['Smiled at me!', 'Held head up', 'Tracked toy', 'Cooed and babbled', 'Rolled over!']
         }
         
+        const activityHour = 9 + Math.floor(Math.random() * 10) // Between 9am-7pm
         activities.push({
           id: id++,
           type: 'other',
           activityType,
-          timestamp: daysAgo(day, Math.floor(Math.random() * 16) + 8, Math.floor(Math.random() * 60)),
+          timestamp: atTimeOnDay(day, activityHour, Math.floor(Math.random() * 60)),
           notes: notes[activityType][Math.floor(Math.random() * notes[activityType].length)]
         })
       }
       
-      // Weekly weight check
+      // Weekly weight check (usually at pediatrician around 2pm)
       if (day % 7 === 0) {
         const baseWeight = 10 + (endDay - day) * 0.15 // Growing baby
-        const weight = Math.floor(baseWeight) + Math.floor((baseWeight % 1) * 16)
         activities.push({
           id: id++,
           type: 'other',
           activityType: 'weight',
-          timestamp: daysAgo(day, 14, Math.floor(Math.random() * 60)),
+          timestamp: atTimeOnDay(day, 14, Math.floor(Math.random() * 30)),
           notes: `${Math.floor(baseWeight)} lbs ${Math.floor((baseWeight % 1) * 16)} oz`
         })
       }
