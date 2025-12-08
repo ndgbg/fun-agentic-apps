@@ -12,6 +12,7 @@ import Analytics from './components/Analytics'
 import CalendarView from './components/CalendarView'
 import ScheduleManager from './components/ScheduleManager'
 import AgentDashboard from './components/AgentDashboard'
+import InsightsView from './components/InsightsView'
 import { generateSampleData, generateSampleSchedules } from './sampleData'
 import { HomeIcon, CalendarIcon, ChartIcon, ScheduleIcon, ChatIcon, ProfileIcon, LogoIcon } from './components/Icons'
 import WelcomeScreen from './components/WelcomeScreen'
@@ -283,15 +284,23 @@ function App() {
               setActivities(sampleActivities)
               setSchedules(sampleSchedules)
               setShowMenu(false)
-              // Don't erase baby name and birthdate
+              
+              // Set default baby info if not already set
+              const sampleBabyName = babyName || 'Emma'
+              const sampleBirthDate = babyBirthDate || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 3 months ago
+              
+              if (!babyName) setBabyName(sampleBabyName)
+              if (!babyBirthDate) setBabyBirthDate(sampleBirthDate)
+              
               localStorage.setItem('babyActivities', JSON.stringify({ 
                 activities: sampleActivities, 
                 activeNap: null, 
                 schedules: sampleSchedules,
-                babyName,
-                babyBirthDate
+                babyName: sampleBabyName,
+                babyBirthDate: sampleBirthDate,
+                babyImage
               }))
-              alert(`Loaded ${sampleActivities.length} activities and ${sampleSchedules.length} schedules!`)
+              alert(`Loaded ${sampleActivities.length} activities and ${sampleSchedules.length} schedules! Baby name set to ${sampleBabyName}.`)
             }}>
               Load Sample Data
             </button>
@@ -436,9 +445,10 @@ function App() {
 
       {activeTab === 'analytics' && (
         <div className="tab-content">
-          <Analytics 
+          <InsightsView 
             activities={activities}
-            embedded={true}
+            babyBirthDate={babyBirthDate}
+            babyName={babyName}
           />
         </div>
       )}
@@ -468,6 +478,8 @@ function App() {
         <div className="tab-content">
           <ChatAgent 
             activities={activities}
+            babyName={babyName}
+            babyBirthDate={babyBirthDate}
             embedded={true}
           />
         </div>
@@ -517,6 +529,13 @@ function App() {
         >
           <ScheduleIcon active={activeTab === 'nannies'} />
           <span>Caregivers</span>
+        </button>
+        <button 
+          className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}
+          onClick={() => setActiveTab('chat')}
+        >
+          <ChatIcon active={activeTab === 'chat'} />
+          <span>Chat</span>
         </button>
         <button 
           className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}

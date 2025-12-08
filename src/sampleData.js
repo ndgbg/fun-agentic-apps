@@ -20,9 +20,13 @@ export const generateSampleData = () => {
   
   // Create timestamp at specific time of day X days ago
   const atTimeOnDay = (days, hour, minute = 0) => {
-    const date = new Date(now)
+    const date = new Date()
     date.setDate(date.getDate() - days)
     date.setHours(hour, minute, 0, 0)
+    // Ensure we're creating a time in the past
+    if (date > now) {
+      date.setDate(date.getDate() - 1)
+    }
     return date.toISOString()
   }
   

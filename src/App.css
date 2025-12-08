@@ -3328,3 +3328,405 @@ body {
   letter-spacing: 0.5px;
   box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
 }
+
+
+/* Fix oversized buttons in AI Agent */
+.rec-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.rec-actions .btn {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.rec-actions .btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.rec-actions .btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.rec-actions .btn-secondary {
+  background: var(--gray-2);
+  color: var(--text-secondary);
+}
+
+.rec-actions .btn-secondary:hover {
+  background: var(--gray-3);
+}
+
+
+/* Insights View Tabs */
+.insights-view {
+  padding-bottom: 1rem;
+}
+
+.insights-tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 0;
+  background: white;
+  border-bottom: 1px solid var(--gray-3);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.insight-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.insight-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.insight-tab:hover {
+  color: var(--text-primary);
+}
+
+
+/* Caretaker Hours Summary */
+.caretaker-summary {
+  background: var(--gradient-2);
+  padding: 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.caretaker-summary h5 {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+
+.summary-item.total {
+  background: rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.summary-name {
+  color: white;
+  font-size: 0.9375rem;
+}
+
+.summary-hours {
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+
+/* Insights Content */
+.insights-content,
+.analytics-content {
+  padding: 1.5rem;
+}
+
+.insights-content h3,
+.analytics-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.insight-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--info);
+  padding: 1.25rem;
+  border-radius: 12px;
+  color: var(--text-primary);
+}
+
+.insight-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.insight-text {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.no-insights {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-tertiary);
+}
+
+
+/* Analytics Tab Content */
+.analytics-tab-content {
+  padding: 1.5rem;
+}
+
+.time-range-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--gray-2);
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.range-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.range-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.insights-view .stat-card {
+  background: var(--gradient-2);
+  padding: 1.5rem 1.25rem;
+  border-radius: 16px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 140px;
+  justify-content: center;
+}
+
+.insights-view .stat-value {
+  font-size: 2.75rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 0.5rem;
+  color: #FCA5A5 !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: none !important;
+  -webkit-text-fill-color: #FCA5A5 !important;
+  line-height: 1;
+}
+
+.insights-view .stat-label {
+  font-size: 0.6875rem;
+  opacity: 1;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.insights-view .stat-breakdown {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.chart-section {
+  background: var(--card-bg);
+  padding: 1.25rem;
+  border-radius: 12px;
+}
+
+.chart-section h4 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  height: 150px;
+  padding: 1rem 0;
+}
+
+.bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bar {
+  width: 100%;
+  background: var(--primary);
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.25rem;
+  transition: all 0.3s;
+}
+
+.bar:hover {
+  background: var(--primary-dark);
+}
+
+.bar-value {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: white;
+}
+
+.bar-label {
+  font-size: 0.625rem;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+
+/* Insights Content Wrapper */
+.insights-content-wrapper {
+  padding: 1.5rem;
+}
+
+.insights-section {
+  margin-bottom: 2rem;
+}
+
+.insights-section h4 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.insight-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--info);
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+}
+
+.insight-card.positive {
+  background: var(--success);
+}
+
+.insight-card.warning {
+  background: var(--warning);
+}
+
+.insight-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.insight-text {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+
+/* Time Range Selector - Insights View */
+.insights-view .time-range-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: var(--gray-2);
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.insights-view .range-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.insights-view .range-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.insights-view .range-btn:hover:not(.active) {
+  color: var(--text-primary);
+}
