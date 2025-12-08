@@ -41,7 +41,7 @@ function AgentDashboard({ activities, babyBirthDate, babyName, embedded }) {
         type: 'critical',
         category: 'sleep',
         title: 'Sleep Deficit Detected',
-        description: `${babyName} has only slept ${Math.floor(totalSleep / 60)}h ${totalSleep % 60}m today. Babies need 12-16 hours of sleep.`,
+        description: `${babyName || 'Baby'} has only slept ${Math.floor(totalSleep / 60)}h ${totalSleep % 60}m today. Babies need 12-16 hours of sleep.`,
         action: 'Create optimal nap schedule',
         icon: '◐',
         priority: 'high',
@@ -259,7 +259,7 @@ function AgentDashboard({ activities, babyBirthDate, babyName, embedded }) {
       <div className="agent-content">
         <div className="agent-intro">
           <h3>🤖 Your Autonomous Care Assistant</h3>
-          <p>I continuously analyze {babyName}'s patterns and proactively suggest interventions to optimize care.</p>
+          <p>I continuously analyze {babyName || 'your baby'}'s patterns and proactively suggest interventions to optimize care.</p>
         </div>
 
         {recommendations.length > 0 && (
