@@ -33,11 +33,11 @@ export const generateSampleData = () => {
     
     for (let day = startDay; day <= endDay; day++) {
       // 6-8 feedings per day at realistic times (7am-11pm)
-      const feedTimes = [7, 10, 13, 16, 19, 21, 23] // hours of day
+      const feedTimes = [7, 10, 13, 16, 19, 21, 23, 1] // hours of day (including late night)
       const numFeeds = 6 + Math.floor(Math.random() * 3)
       
       for (let i = 0; i < numFeeds; i++) {
-        const hour = feedTimes[i]
+        const hour = feedTimes[i % feedTimes.length] // Use modulo to prevent out of bounds
         const minute = Math.floor(Math.random() * 30)
         const feedType = Math.random() > 0.6 ? 'breast' : 'bottle'
         const feeding = {
@@ -82,7 +82,7 @@ export const generateSampleData = () => {
       const numNaps = 3 + Math.floor(Math.random() * 2)
       
       for (let i = 0; i < numNaps; i++) {
-        const napTime = napTimes[i]
+        const napTime = napTimes[i % napTimes.length] // Use modulo to prevent out of bounds
         const minute = Math.floor(Math.random() * 30)
         const startTime = atTimeOnDay(day, napTime.start, minute)
         const endDate = new Date(startTime)
