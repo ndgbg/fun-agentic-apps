@@ -44,15 +44,6 @@ Want to add your own agentic app? We welcome contributions!
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## 💡 Ideas for Agentic Apps
-
-Looking for inspiration? Here are some ideas:
-- Personal finance agent that monitors spending and suggests optimizations
-- Fitness agent that adapts workout plans based on progress
-- Learning agent that creates personalized study schedules
-- Home automation agent that predicts and adjusts settings
-- Career agent that tracks skills and suggests learning paths
-
 ## 📫 Connect
 
 - GitHub: [@ndgbg](https://github.com/ndgbg)
