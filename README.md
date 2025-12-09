@@ -32,4 +32,4 @@ If you find these projects helpful, give them a star! It helps others discover a
 
 ---
 
-Built with [Kiro](https://kiro.ai) - AI-powered development environment
+Built with [Kiro](https://kiro.dev/) - AI-powered development environment
