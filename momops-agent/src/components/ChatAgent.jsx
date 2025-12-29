@@ -1,10 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { llmService } from '../services/LLMService'
 
 function ChatAgent({ activities, babyName, babyBirthDate, onClose, embedded }) {
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: `Hi! I'm your MomOps assistant${babyName ? ` for ${babyName}` : ''}. Ask me anything about your baby's schedule, patterns, or get parenting advice!` }
+    { role: 'assistant', text: `Hi! I'm your MomOps assistant${babyName ? ` for ${babyName}` : ''}. I'm powered by AI and can analyze your baby's patterns to give personalized advice. Ask me anything!` }
   ])
   const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [llmStatus, setLlmStatus] = useState('not_initialized')
+
+  // Initialize LLM on component mount
+  useEffect(() => {
+    const initializeLLM = async () => {
+      try {
+        setLlmStatus('initializing')
+        await llmService.initialize()
+        setLlmStatus('ready')
+        
+        // Update welcome message when LLM is ready
+        setMessages(prev => [
+          {
+            role: 'assistant', 
+            text: `Hi! I'm your AI-powered MomOps assistant${babyName ? ` for ${babyName}` : ''}. I can analyze ${babyName || 'your baby'}'s patterns and provide personalized advice. My AI brain is now fully loaded and ready to help! What would you like to know?`
+          }
+        ])
+      } catch (error) {
+        console.error('Failed to initialize LLM:', error)
+        setLlmStatus('error')
+        setMessages(prev => [
+          {
+            role: 'assistant',
+            text: `Hi! I'm your MomOps assistant${babyName ? ` for ${babyName}` : ''}. I'm having trouble loading my AI capabilities right now, but I can still help with basic questions about your baby's patterns!`
+          }
+        ])
+      }
+    }
+
+    initializeLLM()
+  }, [])
   
   const getBabyAge = () => {
     if (!babyBirthDate) return null
@@ -34,7 +67,30 @@ function ChatAgent({ activities, babyName, babyBirthDate, onClose, embedded }) {
     }
   }
 
-  const generateResponse = (question) => {
+  const generateResponse = async (question) => {
+    if (llmStatus === 'ready') {
+      // Use LLM for intelligent response
+      const babyContext = {
+        babyName,
+        babyAge: getBabyAge(),
+        recentActivities: activities.slice(0, 20),
+        patterns: analyzeSchedule()
+      }
+
+      try {
+        const response = await llmService.generateChatResponse(question, babyContext)
+        return response
+      } catch (error) {
+        console.error('LLM chat failed, falling back to rule-based:', error)
+        return generateFallbackResponse(question)
+      }
+    } else {
+      // Fallback to rule-based responses
+      return generateFallbackResponse(question)
+    }
+  }
+
+  const generateFallbackResponse = (question) => {
     const q = question.toLowerCase()
     const stats = analyzeSchedule()
     const age = getBabyAge()
@@ -127,24 +183,57 @@ function ChatAgent({ activities, babyName, babyBirthDate, onClose, embedded }) {
     return `I'm here to help with ${babyRef}'s care! I can answer questions about:\n\n📊 Baby's Data:\n• Feeding, sleep, and diaper patterns\n• Daily summaries and schedules\n\n👶 Parenting Topics:\n• Sleep training & white noise\n• Soothing techniques\n• Milestones & development\n• Tummy time\n• Teething\n• Pacifiers\n• Screen time\n• Vaccines\n• Bath time\n\nTry asking: "Is white noise safe?" or "How to soothe crying baby?"`
   }
 
-  const handleSend = () => {
-    if (!input.trim()) return
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return
     
     const userMessage = { role: 'user', text: input }
-    setMessages([...messages, userMessage])
-    
-    setTimeout(() => {
-      const response = generateResponse(input)
-      setMessages(prev => [...prev, { role: 'assistant', text: response }])
-    }, 500)
-    
+    setMessages(prev => [...prev, userMessage])
     setInput('')
+    setIsLoading(true)
+    
+    try {
+      const response = await generateResponse(input)
+      setMessages(prev => [...prev, { role: 'assistant', text: response }])
+    } catch (error) {
+      console.error('Chat error:', error)
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        text: 'I apologize, but I encountered an error. Please try asking your question again.' 
+      }])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+    }
+  }
+
+  const handleUpgradeToLlama = async () => {
+    setIsLoading(true)
+    setMessages(prev => [...prev, { 
+      role: 'assistant', 
+      text: '🦙 Upgrading to real Llama model... This will download ~600MB and may take a minute. You can continue using the app while I load!' 
+    }])
+    
+    try {
+      await llmService.upgradeToLlama()
+      setLlmStatus('llama_ready')
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        text: '🦙 Llama is now ready! I can now provide even more intelligent and nuanced responses. Ask me anything!' 
+      }])
+    } catch (error) {
+      console.error('Llama upgrade failed:', error)
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        text: '⚠️ Llama upgrade failed, but I\'m still here with enhanced demo capabilities! The smart analysis continues to work great.' 
+      }])
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -166,7 +255,24 @@ function ChatAgent({ activities, babyName, babyBirthDate, onClose, embedded }) {
               <circle cx="16" cy="10" r="1.5" fill="#86EFAC"/>
             </svg>
           </div>
-          <h2>Chat Assistant</h2>
+          <div className="chat-header-content">
+            <h2>AI Chat Assistant</h2>
+            <div className={`llm-status ${llmStatus}`}>
+              {llmStatus === 'llama_ready' && '🦙 Llama Ready'}
+              {llmStatus === 'demo_ready' && '🧠 Smart Demo'}
+              {llmStatus === 'loading_llama' && '🔄 Loading Llama...'}
+              {llmStatus === 'not_initialized' && '⏳ Starting...'}
+            </div>
+            {llmStatus === 'demo_ready' && (
+              <button 
+                className="upgrade-llama-btn"
+                onClick={handleUpgradeToLlama}
+                disabled={isLoading}
+              >
+                🦙 Upgrade to Real Llama
+              </button>
+            )}
+          </div>
         </div>
       )}
         
@@ -178,6 +284,18 @@ function ChatAgent({ activities, babyName, babyBirthDate, onClose, embedded }) {
               </div>
             </div>
           ))}
+          {isLoading && (
+            <div className="chat-message assistant">
+              <div className="message-bubble loading">
+                <div className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                AI is thinking...
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="chat-input-container">
@@ -186,11 +304,16 @@ function ChatAgent({ activities, babyName, babyBirthDate, onClose, embedded }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask about feeding, naps, patterns..."
+            placeholder={llmStatus === 'ready' ? "Ask me anything about your baby..." : "Loading AI capabilities..."}
             className="chat-input"
+            disabled={isLoading}
           />
-          <button className="send-btn" onClick={handleSend}>
-            Send
+          <button 
+            className="send-btn" 
+            onClick={handleSend}
+            disabled={isLoading || !input.trim()}
+          >
+            {isLoading ? '...' : 'Send'}
           </button>
         </div>
     </>

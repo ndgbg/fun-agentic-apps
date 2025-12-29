@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react'
 
 function AgentDashboard({ activities, babyBirthDate, babyName, embedded }) {
   const [goals, setGoals] = useState([])
-  const [recommendations, setRecommendations] = useState([])
-  const [activeGoal, setActiveGoal] = useState(null)
+  const [agentNotifications, setAgentNotifications] = useState([])
   const [showGoalModal, setShowGoalModal] = useState(false)
 
   useEffect(() => {
@@ -12,187 +11,85 @@ function AgentDashboard({ activities, babyBirthDate, babyName, embedded }) {
     if (saved) {
       setGoals(JSON.parse(saved))
     }
+    
+    // Load agent notifications
+    loadAgentNotifications()
   }, [])
 
   useEffect(() => {
-    // Generate autonomous recommendations
-    generateRecommendations()
-  }, [activities, babyBirthDate, babyName, goals])
+    // Listen for new agent notifications
+    const handleAgentNotification = (event) => {
+      loadAgentNotifications()
+    }
+
+    window.addEventListener('agentNotification', handleAgentNotification)
+    
+    return () => {
+      window.removeEventListener('agentNotification', handleAgentNotification)
+    }
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('babyGoals', JSON.stringify(goals))
   }, [goals])
 
-  const generateRecommendations = () => {
-    const recs = []
-    const now = new Date()
-    const today = activities.filter(a => {
-      const date = new Date(a.timestamp)
-      return date.toDateString() === now.toDateString()
-    })
+  const loadAgentNotifications = () => {
+    const notifications = JSON.parse(localStorage.getItem('agentNotifications') || '[]')
+    setAgentNotifications(notifications)
+  }
 
-    // Analyze patterns and generate proactive recommendations
-    
-    // 1. Sleep optimization
-    const naps = today.filter(a => a.type === 'nap')
-    const totalSleep = naps.reduce((sum, n) => sum + (n.duration || 0), 0)
-    
-    if (totalSleep < 180 && naps.length < 3) {
-      recs.push({
-        id: 'sleep-1',
-        type: 'critical',
-        category: 'sleep',
-        title: 'Sleep Deficit Detected',
-        description: `${babyName || 'Baby'} has only slept ${Math.floor(totalSleep / 60)}h ${totalSleep % 60}m today. Babies need 12-16 hours of sleep.`,
-        action: 'Create optimal nap schedule',
-        icon: '◐',
-        priority: 'high',
-        reasoning: 'Insufficient sleep can affect development and mood. Agent recommends immediate intervention.',
-        plan: [
-          'Put baby down for nap within next 30 minutes',
-          'Create dark, quiet environment',
-          'Use white noise machine',
-          'Watch for sleep cues (yawning, eye rubbing)'
-        ]
-      })
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'feeding': return '🍼'
+      case 'sleep': return '💤'
+      case 'development': return '📈'
+      case 'environment': return '🌡️'
+      case 'routine': return '⏰'
+      case 'growth': return '📊'
+      default: return '🔍'
     }
+  }
 
-    // 2. Feeding pattern analysis
-    const feeds = today.filter(a => a.type === 'feed')
-    if (feeds.length > 0) {
-      const lastFeed = feeds[0]
-      const hoursSinceLastFeed = (now - new Date(lastFeed.timestamp)) / (1000 * 60 * 60)
-      
-      if (hoursSinceLastFeed > 3.5) {
-        recs.push({
-          id: 'feed-1',
-          type: 'warning',
-          category: 'feeding',
-          title: 'Feeding Window Approaching',
-          description: `Last feed was ${Math.floor(hoursSinceLastFeed)}h ${Math.round((hoursSinceLastFeed % 1) * 60)}m ago.`,
-          action: 'Prepare for feeding',
-          icon: '●',
-          priority: 'medium',
-          reasoning: 'Babies typically feed every 2-3 hours. Proactive preparation prevents crying.',
-          plan: [
-            'Prepare bottle or find comfortable feeding spot',
-            'Check diaper before feeding',
-            'Have burp cloth ready',
-            'Create calm environment'
-          ]
-        })
-      }
+  const getCategoryColor = (category) => {
+    switch (category) {
+      case 'feeding': return '#3B82F6'
+      case 'sleep': return '#8B5CF6'
+      case 'development': return '#10B981'
+      case 'environment': return '#F59E0B'
+      case 'routine': return '#EF4444'
+      case 'growth': return '#06B6D4'
+      default: return '#6B7280'
     }
+  }
 
-    // 3. Developmental activities
-    const age = babyBirthDate ? Math.floor((now - new Date(babyBirthDate)) / (1000 * 60 * 60 * 24 * 30)) : 6
-    const todayActivities = today.filter(a => a.type === 'other')
-    const hasTummyTime = todayActivities.some(a => a.activityType === 'tummytime')
-    
-    if (!hasTummyTime && age < 6) {
-      recs.push({
-        id: 'dev-1',
-        type: 'info',
-        category: 'development',
-        title: 'Tummy Time Recommended',
-        description: 'No tummy time recorded today. This is crucial for motor development.',
-        action: 'Schedule tummy time',
-        icon: '▲',
-        priority: 'medium',
-        reasoning: 'Tummy time strengthens neck, back, and shoulder muscles. Essential for development.',
-        plan: [
-          'Wait 30 minutes after feeding',
-          'Place baby on play mat',
-          'Start with 3-5 minutes',
-          'Use toys to encourage head lifting',
-          'Stay close and encourage'
-        ]
-      })
+  const formatTimeAgo = (timestamp) => {
+    const minutes = Math.floor((Date.now() - new Date(timestamp).getTime()) / 60000)
+    if (minutes < 1) return 'Just now'
+    if (minutes < 60) return `${minutes}m ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+  }
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'critical': return '#ff4444'
+      case 'high': return '#ff8800'
+      case 'medium': return '#ffaa00'
+      case 'low': return '#00aa88'
+      default: return '#666666'
     }
+  }
 
-    // 4. Diaper change prediction
-    const diapers = today.filter(a => a.type === 'diaper')
-    if (diapers.length > 0) {
-      const lastDiaper = diapers[0]
-      const hoursSinceLastDiaper = (now - new Date(lastDiaper.timestamp)) / (1000 * 60 * 60)
-      
-      if (hoursSinceLastDiaper > 2.5) {
-        recs.push({
-          id: 'diaper-1',
-          type: 'info',
-          category: 'hygiene',
-          title: 'Diaper Check Recommended',
-          description: `Last diaper change was ${Math.floor(hoursSinceLastDiaper)}h ago.`,
-          action: 'Check diaper',
-          icon: '◆',
-          priority: 'low',
-          reasoning: 'Regular diaper changes prevent rashes and discomfort.',
-          plan: [
-            'Check diaper for wetness',
-            'Have changing supplies ready',
-            'Use this as opportunity for bonding',
-            'Apply diaper cream if needed'
-          ]
-        })
-      }
+  const getPriorityIcon = (priority) => {
+    switch (priority) {
+      case 'critical': return '🚨'
+      case 'high': return '⚠️'
+      case 'medium': return '💡'
+      case 'low': return 'ℹ️'
+      default: return '🤖'
     }
-
-    // 5. Routine optimization
-    if (feeds.length > 0 && naps.length > 0) {
-      const feedTimes = feeds.map(f => new Date(f.timestamp).getHours())
-      const napTimes = naps.map(n => new Date(n.timestamp).getHours())
-      
-      // Check if feeding before naps
-      const feedsBeforeNaps = napTimes.filter(nt => 
-        feedTimes.some(ft => Math.abs(ft - nt) < 1)
-      ).length
-      
-      if (feedsBeforeNaps < naps.length * 0.5) {
-        recs.push({
-          id: 'routine-1',
-          type: 'insight',
-          category: 'routine',
-          title: 'Optimize Feed-Sleep Routine',
-          description: 'Agent detected inconsistent feeding before naps.',
-          action: 'Establish routine',
-          icon: '◎',
-          priority: 'low',
-          reasoning: 'Feeding before naps helps baby sleep longer and more soundly.',
-          plan: [
-            'Feed baby 15-30 minutes before nap time',
-            'Burp thoroughly after feeding',
-            'Create consistent pre-nap routine',
-            'Track results over next 3 days'
-          ]
-        })
-      }
-    }
-
-    // 6. Goal-based recommendations
-    goals.forEach(goal => {
-      if (goal.status === 'active') {
-        const progress = calculateGoalProgress(goal, activities)
-        if (progress < 50) {
-          recs.push({
-            id: `goal-${goal.id}`,
-            type: 'goal',
-            category: 'goal',
-            title: `Goal Progress: ${goal.title}`,
-            description: `Current progress: ${progress}%. Agent suggests adjustments.`,
-            action: 'Review goal plan',
-            icon: '◉',
-            priority: 'medium',
-            reasoning: goal.reasoning,
-            plan: goal.plan
-          })
-        }
-      }
-    })
-
-    setRecommendations(recs.sort((a, b) => {
-      const priority = { high: 3, medium: 2, low: 1 }
-      return priority[b.priority] - priority[a.priority]
-    }))
   }
 
   const calculateGoalProgress = (goal, activities) => {
@@ -227,21 +124,144 @@ function AgentDashboard({ activities, babyBirthDate, babyName, embedded }) {
     setShowGoalModal(false)
   }
 
-  const dismissRecommendation = (id) => {
-    setRecommendations(recs => recs.filter(r => r.id !== id))
+  const handleNotificationAction = (notification, actionType) => {
+    console.log('🤖 Dashboard action:', actionType, notification)
+    
+    // Mark notification as acted upon
+    const updatedNotifications = agentNotifications.map(n => 
+      n.id === notification.id 
+        ? { ...n, actedUpon: true, userAction: actionType, actionTime: new Date().toISOString() }
+        : n
+    )
+    localStorage.setItem('agentNotifications', JSON.stringify(updatedNotifications))
+    setAgentNotifications(updatedNotifications)
+    
+    // Convert to goal if accepted
+    if (actionType === 'accept') {
+      addGoal({
+        title: notification.title,
+        type: 'custom',
+        target: 100,
+        reasoning: notification.reasoning || 'Agent recommendation',
+        plan: ['Follow agent guidance', 'Monitor progress', 'Adjust as needed']
+      })
+    }
   }
 
-  const acceptRecommendation = (rec) => {
-    // Convert recommendation to goal
-    addGoal({
-      title: rec.title,
-      type: rec.category,
-      target: 100,
-      reasoning: rec.reasoning,
-      plan: rec.plan
-    })
-    dismissRecommendation(rec.id)
+  const dismissNotification = (notification) => {
+    const updatedNotifications = agentNotifications.map(n => 
+      n.id === notification.id 
+        ? { ...n, dismissed: true, dismissTime: new Date().toISOString() }
+        : n
+    )
+    localStorage.setItem('agentNotifications', JSON.stringify(updatedNotifications))
+    setAgentNotifications(updatedNotifications)
   }
+
+  // Sample recommendations for demo - professional, no emojis, dynamic baby name
+  const sampleRecommendations = [
+    {
+      id: 'sample-1',
+      title: 'Feeding Pattern Optimization',
+      message: `Agent detected ${babyName || 'your baby'} feeds optimally every 3h 15m. Current schedule varies by 45 minutes, which may affect sleep quality.`,
+      reasoning: 'Consistent feeding intervals improve digestion efficiency and promote better sleep patterns',
+      confidence: 0.87,
+      priority: 'medium',
+      category: 'feeding',
+      timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+      actedUpon: false,
+      dismissed: false
+    },
+    {
+      id: 'sample-2', 
+      title: 'Natural Sleep Window Identified',
+      message: `${babyName || 'Your baby'} consistently shows sleep cues at 2:30 PM daily. Establishing an afternoon nap routine could improve overall sleep quality.`,
+      reasoning: 'Predictable sleep windows indicate healthy circadian rhythm development and should be reinforced',
+      confidence: 0.92,
+      priority: 'high',
+      category: 'sleep',
+      timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+      actedUpon: true,
+      userAction: 'accept'
+    },
+    {
+      id: 'sample-3',
+      title: 'Development Milestone Tracking',
+      message: `At 4 months, ${babyName || 'your baby'} should demonstrate increased head control. Current tummy time sessions may be insufficient.`,
+      reasoning: 'Tummy time strengthens neck and shoulder muscles essential for sitting up and motor development',
+      confidence: 0.78,
+      priority: 'medium',
+      category: 'development',
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      actedUpon: false,
+      dismissed: true
+    },
+    {
+      id: 'sample-4',
+      title: 'Environmental Sleep Correlation',
+      message: `${babyName || 'Your baby'} sleeps 20% longer on days with morning outdoor exposure. Today's weather conditions are optimal.`,
+      reasoning: 'Natural light exposure regulates circadian rhythms and promotes deeper, more restorative sleep',
+      confidence: 0.85,
+      priority: 'low',
+      category: 'environment',
+      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+      actedUpon: false,
+      dismissed: false
+    },
+    {
+      id: 'sample-5',
+      title: 'Bedtime Routine Efficiency',
+      message: `Current bedtime routine duration is 45 minutes. Optimization to 30 minutes may improve ${babyName || 'your baby'}'s sleep onset latency.`,
+      reasoning: 'Extended routines can overstimulate infants, while optimal routines promote faster sleep transitions',
+      confidence: 0.73,
+      priority: 'low',
+      category: 'routine',
+      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+      actedUpon: false,
+      dismissed: false
+    },
+    {
+      id: 'sample-6',
+      title: 'Temperature Optimization Analysis',
+      message: `${babyName || 'Your baby'}'s sleep duration increases 30 minutes when room temperature is maintained at 68-70°F versus 72°F+.`,
+      reasoning: 'Cooler temperatures support natural thermoregulation and promote deeper sleep phases',
+      confidence: 0.89,
+      priority: 'medium',
+      category: 'environment',
+      timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+      actedUpon: true,
+      userAction: 'accept'
+    },
+    {
+      id: 'sample-7',
+      title: 'Acoustic Environment Calibration',
+      message: `White noise at 50dB increases ${babyName || 'your baby'}'s nap duration by 25%. Current audio levels appear suboptimal.`,
+      reasoning: 'Consistent background noise masks environmental disruptions that fragment infant sleep',
+      confidence: 0.81,
+      priority: 'low',
+      category: 'environment',
+      timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+      actedUpon: false,
+      dismissed: false
+    },
+    {
+      id: 'sample-8',
+      title: 'Growth Phase Detection',
+      message: `${babyName || 'Your baby'}'s feeding frequency has increased 40% over 3 days, indicating probable growth spurt initiation.`,
+      reasoning: 'Growth spurts require increased nutritional intake and typically last 2-7 days',
+      confidence: 0.94,
+      priority: 'high',
+      category: 'growth',
+      timestamp: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+      actedUpon: true,
+      userAction: 'accept'
+    }
+  ]
+
+  // Merge real notifications with samples for demo
+  const allNotifications = [...agentNotifications, ...sampleRecommendations]
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .slice(0, 10) // Show last 10
 
   const content = (
     <>
@@ -254,60 +274,139 @@ function AgentDashboard({ activities, babyBirthDate, babyName, embedded }) {
               <path d="M17.5 6.5L15 9M9 15L6.5 17.5M17.5 17.5L15 15M9 9L6.5 6.5" stroke="#86EFAC" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </div>
-          <h2>AI Agent</h2>
+          <h2>AI Agent Dashboard</h2>
         </div>
       )}
 
       <div className="agent-content">
         <div className="agent-intro">
-          <h3>🤖 Your Autonomous Care Assistant</h3>
-          <p>I continuously analyze {babyName || 'your baby'}'s patterns and proactively suggest interventions to optimize care.</p>
+          <h3>Autonomous Care Intelligence</h3>
+          <p>Advanced pattern recognition and predictive analytics for optimal infant care.</p>
+          <div className="agent-status-indicators">
+            <div className="status-indicator">
+              <span className="status-dot active"></span>
+              <span>Real-time Monitoring</span>
+            </div>
+            <div className="status-indicator">
+              <span className="status-dot learning"></span>
+              <span>Pattern Learning</span>
+            </div>
+            <div className="status-indicator">
+              <span className="status-dot adaptive"></span>
+              <span>Adaptive Recommendations</span>
+            </div>
+          </div>
         </div>
 
-        {recommendations.length > 0 && (
-          <div className="recommendations-section">
-            <h4>Proactive Recommendations</h4>
-            {recommendations.map(rec => (
-              <div key={rec.id} className={`recommendation-card ${rec.type}`}>
-                <div className="rec-header">
-                  <span className="rec-icon">{rec.icon}</span>
-                  <div className="rec-title-section">
-                    <h5>{rec.title}</h5>
-                    <span className={`priority-badge ${rec.priority}`}>{rec.priority} priority</span>
-                  </div>
-                </div>
-                <p className="rec-description">{rec.description}</p>
-                <div className="rec-reasoning">
-                  <strong>Agent Reasoning:</strong> {rec.reasoning}
-                </div>
-                <div className="rec-plan">
-                  <strong>Action Plan:</strong>
-                  <ol>
-                    {rec.plan.map((step, idx) => (
-                      <li key={idx}>{step}</li>
-                    ))}
-                  </ol>
-                </div>
-                <div className="rec-actions">
-                  <button className="btn btn-primary" onClick={() => acceptRecommendation(rec)}>
-                    Accept & Create Goal
-                  </button>
-                  <button className="btn btn-secondary" onClick={() => dismissRecommendation(rec.id)}>
-                    Dismiss
-                  </button>
-                </div>
+        <div className="agent-activity-section">
+          <div className="section-header-enhanced">
+            <div className="section-title">
+              <h4>Agent Intelligence Center</h4>
+              <p className="section-subtitle">Autonomous recommendations based on pattern analysis</p>
+            </div>
+            <div className="activity-stats">
+              <div className="stat-item">
+                <span className="stat-number">{allNotifications.filter(n => !n.dismissed && !n.actedUpon).length}</span>
+                <span className="stat-label">Active</span>
               </div>
-            ))}
+              <div className="stat-item">
+                <span className="stat-number">{allNotifications.filter(n => n.actedUpon).length}</span>
+                <span className="stat-label">Accepted</span>
+              </div>
+            </div>
           </div>
-        )}
-
-        {recommendations.length === 0 && (
-          <div className="no-recommendations">
-            <div className="success-icon">✓</div>
-            <h4>All Systems Optimal</h4>
-            <p>Agent has analyzed all patterns and found no immediate concerns. Great job!</p>
-          </div>
-        )}
+          {allNotifications.length === 0 ? (
+            <div className="no-notifications">
+              <div className="success-icon">✓</div>
+              <h4>All Systems Optimal</h4>
+              <p>Agent is monitoring... No recommendations yet.</p>
+            </div>
+          ) : (
+            <div className="notifications-list">
+              {allNotifications.map(notification => (
+                <div 
+                  key={notification.id} 
+                  className={`agent-notification-item ${notification.dismissed ? 'dismissed' : ''} ${notification.actedUpon ? 'acted-upon' : ''}`}
+                  style={{ borderLeftColor: getCategoryColor(notification.category) }}
+                >
+                  <div className="notification-header">
+                    <div className="notification-category">
+                      <div className="category-icon" style={{ backgroundColor: getCategoryColor(notification.category) }}>
+                        {getCategoryIcon(notification.category)}
+                      </div>
+                      <div className="category-info">
+                        <span className="category-name">{notification.category || 'analysis'}</span>
+                        <span className="priority-badge priority-{notification.priority}">{notification.priority}</span>
+                      </div>
+                    </div>
+                    <span className="notification-time">
+                      {formatTimeAgo(notification.timestamp)}
+                    </span>
+                  </div>
+                  
+                  <h5 className="notification-title">{notification.title}</h5>
+                  <p className="notification-message">{notification.message}</p>
+                  
+                  {notification.reasoning && (
+                    <div className="notification-reasoning">
+                      <div className="reasoning-label">Analysis</div>
+                      <div className="reasoning-text">{notification.reasoning}</div>
+                    </div>
+                  )}
+                  
+                  {notification.confidence && (
+                    <div className="notification-confidence">
+                      <div className="confidence-label">Confidence</div>
+                      <div className="confidence-bar">
+                        <div 
+                          className="confidence-fill" 
+                          style={{ 
+                            width: `${notification.confidence * 100}%`,
+                            backgroundColor: getCategoryColor(notification.category)
+                          }}
+                        />
+                      </div>
+                      <span className="confidence-text">
+                        {Math.round(notification.confidence * 100)}%
+                      </span>
+                    </div>
+                  )}
+                  
+                  {!notification.actedUpon && !notification.dismissed && (
+                    <div className="notification-actions">
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handleNotificationAction(notification, 'accept')}
+                      >
+                        Accept Recommendation
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => dismissNotification(notification)}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  )}
+                  
+                  {notification.actedUpon && (
+                    <div className="notification-status accepted">
+                      <div className="status-icon">✓</div>
+                      <span>Recommendation accepted</span>
+                    </div>
+                  )}
+                  
+                  {notification.dismissed && !notification.actedUpon && (
+                    <div className="notification-status dismissed">
+                      <div className="status-icon">×</div>
+                      <span>Dismissed by user</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="goals-section">
           <div className="section-header">
@@ -319,7 +418,7 @@ function AgentDashboard({ activities, babyBirthDate, babyName, embedded }) {
           
           {goals.filter(g => g.status === 'active').length === 0 ? (
             <div className="empty-state">
-              <p>No active goals. Set a goal and let the agent help you achieve it!</p>
+              <p>No active goals. Accept agent recommendations or create custom goals!</p>
             </div>
           ) : (
             <div className="goals-list">

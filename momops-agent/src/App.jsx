@@ -13,11 +13,16 @@ import CalendarView from './components/CalendarView'
 import ScheduleManager from './components/ScheduleManager'
 import AgentDashboard from './components/AgentDashboard'
 import InsightsView from './components/InsightsView'
+import AgentNotifications from './components/AgentNotifications'
 import { generateSampleData, generateSampleSchedules } from './sampleData'
 import { HomeIcon, CalendarIcon, ChartIcon, ScheduleIcon, ChatIcon, ProfileIcon, LogoIcon } from './components/Icons'
 import WelcomeScreen from './components/WelcomeScreen'
 import BabyProfile from './components/BabyProfile'
 import { FeedIcon, NapIcon, DiaperIcon, MedicationIcon, OtherIcon } from './components/ActivityIcons'
+import { AutonomousAgent } from './agents/AutonomousAgent'
+import LLMStatus from './components/LLMStatus'
+import HomeAgentRecommendations from './components/HomeAgentRecommendations'
+import { llmService } from './services/LLMService'
 
 function App() {
   const [activities, setActivities] = useState([])
@@ -36,6 +41,28 @@ function App() {
   const [babyBirthDate, setBabyBirthDate] = useState('')
   const [babyImage, setBabyImage] = useState('')
   const [showWelcome, setShowWelcome] = useState(false)
+  const [autonomousAgent, setAutonomousAgent] = useState(null)
+
+  // Initialize autonomous agent and LLM - temporarily disabled for debugging
+  useEffect(() => {
+    console.log('🤖 App starting (agent temporarily disabled)...')
+    
+    // Temporarily disable autonomous agent for debugging
+    // const agent = new AutonomousAgent()
+    // setAutonomousAgent(agent)
+    
+    // Initialize LLM in background (starts with demo, upgrades on demand)
+    console.log('🧠 Starting lightweight LLM initialization...')
+    llmService.initialize().catch(error => {
+      console.error('🧠 LLM initialization failed:', error)
+    })
+    
+    return () => {
+      // if (agent) {
+      //   agent.stopAutonomousMonitoring()
+      // }
+    }
+  }, [])
 
   useEffect(() => {
     const saved = localStorage.getItem('babyActivities')
@@ -170,6 +197,34 @@ function App() {
     setShowWelcome(false)
   }
 
+  // Handle agent actions
+  const handleAgentAction = (actionType, actionData, notification) => {
+    console.log('🤖 Handling agent action:', actionType, actionData)
+    
+    switch (actionType) {
+      case 'start_nap':
+        startNap()
+        break
+      case 'start_feed':
+        setShowFeedModal(true)
+        break
+      case 'snooze_15':
+        // Already handled by notification component
+        break
+      case 'dismiss_feed':
+        // User indicated baby is not hungry - agent learns from this
+        if (autonomousAgent) {
+          autonomousAgent.recordUserFeedback('feeding_dismissed', {
+            timestamp: new Date().toISOString(),
+            context: notification
+          })
+        }
+        break
+      default:
+        console.log('Unknown agent action:', actionType)
+    }
+  }
+
   const getActivityDetails = (activity) => {
     if (activity.type === 'feed') {
       const type = activity.feedType === 'breast' ? 'Breastfed' : 'Bottle'
@@ -239,6 +294,7 @@ function App() {
 
   return (
     <div className="app">
+      <LLMStatus />
       <header className="header">
         <div className="header-content">
           <div className="header-left">
@@ -321,6 +377,13 @@ function App() {
 
       {activeTab === 'home' && (
         <div className="home-content">
+          {/* AI Agent Recommendations - Top 3 */}
+          <HomeAgentRecommendations 
+            babyName={babyName} 
+            activities={activities}
+            onViewAll={() => setActiveTab('analytics')} 
+          />
+          
           <div className="quick-stats">
             <div className="stat">
               <span className="stat-label">Last Feed</span>
