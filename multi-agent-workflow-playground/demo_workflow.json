@@ -1,0 +1,86 @@
+{
+  "050c7693-999c-4b6c-b883-f2843f9483e0": {
+    "id": "050c7693-999c-4b6c-b883-f2843f9483e0",
+    "name": "Blog Post Creator",
+    "description": "Research, outline, write, and review blog posts",
+    "entry_point": "927606cd-6654-4407-884d-0e00827eee6e",
+    "created_at": "2026-02-03T16:25:37.012904",
+    "agents": [
+      {
+        "id": "927606cd-6654-4407-884d-0e00827eee6e",
+        "name": "Research Specialist",
+        "role": "researcher",
+        "system_prompt": "You are a research specialist. Gather comprehensive information about the topic. Focus on key facts, statistics, and insights.",
+        "model": "claude-3-5-sonnet-20241022",
+        "temperature": 0.7,
+        "tools": [
+          {
+            "type": "web_search",
+            "name": "web_search",
+            "config": {}
+          }
+        ],
+        "memory": {
+          "type": "short_term",
+          "capacity": 10
+        }
+      },
+      {
+        "id": "909b9292-7511-4f43-8398-083a6f5dcb25",
+        "name": "Content Strategist",
+        "role": "analyst",
+        "system_prompt": "You are a content strategist. Analyze the research and create a structured outline with key sections and talking points.",
+        "model": "claude-3-5-sonnet-20241022",
+        "temperature": 0.7,
+        "tools": [],
+        "memory": {
+          "type": "short_term",
+          "capacity": 5
+        }
+      },
+      {
+        "id": "5b233426-54b6-4129-ab59-a74006f5066f",
+        "name": "Content Writer",
+        "role": "writer",
+        "system_prompt": "You are a skilled content writer. Write engaging, clear content following the outline. Use a conversational but professional tone.",
+        "model": "claude-3-5-sonnet-20241022",
+        "temperature": 0.7,
+        "tools": [],
+        "memory": {
+          "type": "short_term",
+          "capacity": 5
+        }
+      },
+      {
+        "id": "6fde7cce-5992-4e3a-a289-2c9dca033e8e",
+        "name": "Editor",
+        "role": "critic",
+        "system_prompt": "You are an editor. Review the content for clarity, accuracy, and engagement. Provide specific improvements.",
+        "model": "claude-3-5-sonnet-20241022",
+        "temperature": 0.7,
+        "tools": [],
+        "memory": {
+          "type": "shared",
+          "capacity": 1000
+        }
+      }
+    ],
+    "connections": [
+      {
+        "from": "927606cd-6654-4407-884d-0e00827eee6e",
+        "to": "909b9292-7511-4f43-8398-083a6f5dcb25",
+        "condition": null
+      },
+      {
+        "from": "909b9292-7511-4f43-8398-083a6f5dcb25",
+        "to": "5b233426-54b6-4129-ab59-a74006f5066f",
+        "condition": null
+      },
+      {
+        "from": "5b233426-54b6-4129-ab59-a74006f5066f",
+        "to": "6fde7cce-5992-4e3a-a289-2c9dca033e8e",
+        "condition": null
+      }
+    ]
+  }
+}
