@@ -1,5 +1,10 @@
 # Calendar Negotiation Agent 📅
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Anthropic](https://img.shields.io/badge/Anthropic-Claude%203.5-orange.svg)](https://www.anthropic.com/)
+[![Google Calendar](https://img.shields.io/badge/Google-Calendar%20API-green.svg)](https://developers.google.com/calendar)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Autonomous scheduling agent that handles the entire meeting coordination process.
 
 ## What It Does

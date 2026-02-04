@@ -1,5 +1,11 @@
 # 👔 Personal Chief of Staff
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Anthropic](https://img.shields.io/badge/Anthropic-Claude%203.5-orange.svg)](https://www.anthropic.com/)
+[![Google APIs](https://img.shields.io/badge/Google-Calendar%20%2B%20Gmail-green.svg)](https://developers.google.com/)
+[![Slack](https://img.shields.io/badge/Slack-API-purple.svg)](https://api.slack.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A local AI that runs your life ops. Self-hosted, proactive, and memory-enabled.
 
 ## What It Does

@@ -1,5 +1,9 @@
 # 🎭 Multi-Agent Workflow Playground
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Anthropic](https://img.shields.io/badge/Anthropic-Claude%203.5-orange.svg)](https://www.anthropic.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **LangChain, but opinionated and visual.** Build, visualize, and execute multi-agent systems with drag-and-drop simplicity.
 
 ## What It Does

@@ -1,5 +1,9 @@
 # Product Spec Reviewer 🎭
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Anthropic](https://img.shields.io/badge/Anthropic-Claude%203.5-orange.svg)](https://www.anthropic.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 **Your toughest stakeholder — automated.**
 
 An agentic AI that intelligently reviews product specs using LLM reasoning.
