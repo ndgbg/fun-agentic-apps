@@ -17,6 +17,23 @@ These aren't just smart apps — they're **autonomous agents** that:
 
 ## 🤖 Apps
 
+### [Calendar Negotiation Agent](calendar-negotiation-agent/)
+Autonomous scheduling that handles the entire meeting coordination process.
+
+**What it does:**
+- Analyzes timezone constraints and participant preferences
+- Proposes optimal meeting times with reasoning
+- Handles responses and objections autonomously
+- Books conference rooms and creates video links
+- Manages rescheduling when conflicts arise
+
+**Why it's agentic:**
+- Multi-step reasoning about constraints
+- Tool use (calendar APIs, email, room booking)
+- Adaptive strategy based on feedback
+- Autonomous decision-making (confirm vs. renegotiate)
+- State management across negotiation rounds
+
 ### [Product Spec Reviewer](product-spec-reviewer/)
 Your toughest stakeholder — automated. Reviews product specs using LLM reasoning.
 
