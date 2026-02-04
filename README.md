@@ -17,7 +17,7 @@ These aren't just smart apps — they're **autonomous agents** that:
 
 ## 🤖 Apps
 
-### [AI Product Review Board](ai-review-board/)
+### [Product Spec Reviewer](product-spec-reviewer/)
 Your toughest stakeholder — automated. Reviews product specs using LLM reasoning.
 
 **What it does:**

@@ -1,4 +1,4 @@
-# AI Product Review Board 🎭
+# Product Spec Reviewer 🎭
 
 **Your toughest stakeholder — automated.**
 
