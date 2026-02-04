@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Chief of Staff</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 { font-size: 3em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        
+        .briefing-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .briefing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .briefing-title {
+            font-size: 1.8em;
+            color: #333;
+        }
+        
+        .briefing-date {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .section {
+            margin: 25px 0;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .summary {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #444;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .priority-list {
+            list-style: none;
+        }
+        
+        .priority-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-size: 1.05em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .priority-number {
+            background: rgba(255,255,255,0.3);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .warning-critical {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        
+        .warning-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .warning-details {
+            font-size: 0.95em;
+            color: #666;
+        }
+        
+        .focus-box {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            line-height: 1.7;
+        }
+        
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .time-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .time-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .time-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .blocker-item {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 4px;
+            color: #721c24;
+        }
+        
+        .win-item {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 4px;
+            color: #155724;
+        }
+        
+        .task-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .task-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .task-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .task-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .task-priority {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .priority-critical { background: #dc3545; color: white; }
+        .priority-high { background: #ffc107; color: #333; }
+        .priority-medium { background: #17a2b8; color: white; }
+        .priority-low { background: #6c757d; color: white; }
+        
+        .task-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .ask-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        
+        .ask-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal.show { display: flex; }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .recommendation {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.7;
+            color: #444;
+        }
+        
+        .close-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👔 Personal Chief of Staff</h1>
+            <p>Your AI managing life operations</p>
+        </div>
+        
+        <div class="briefing-card">
+            <div class="briefing-header">
+                <div class="briefing-title">📋 Daily Briefing</div>
+                <div class="briefing-date" id="briefingDate">Tuesday, Feb 3, 2026</div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">📊 Executive Summary</div>
+                <div class="summary" id="summary">
+                    You have 5 active tasks with 2 approaching deadlines. Focus on high-priority items this morning while energy is high. One blocker needs immediate attention.
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">🎯 Top Priorities</div>
+                <ul class="priority-list" id="priorities">
+                    <li class="priority-item">
+                        <div class="priority-number">1</div>
+                        <div>Schedule team meeting (6h deadline, blocks other work)</div>
+                    </li>
+                    <li class="priority-item">
+                        <div class="priority-number">2</div>
+                        <div>Review design mockups (24h deadline, high impact)</div>
+                    </li>
+                    <li class="priority-item">
+                        <div class="priority-number">3</div>
+                        <div>Finish product spec (48h deadline, critical for launch)</div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">⚠️ Deadline Warnings</div>
+                <div id="warnings">
+                    <div class="warning-box warning-critical">
+                        <div class="warning-title">🔴 CRITICAL: Schedule team meeting</div>
+                        <div class="warning-details">6.0 hours remaining • Estimated: 0.5h</div>
+                    </div>
+                    <div class="warning-box">
+                        <div class="warning-title">🟡 WARNING: Review design mockups</div>
+                        <div class="warning-details">24.0 hours remaining • Estimated: 2.0h</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">💡 Suggested Focus</div>
+                <div class="focus-box" id="focus">
+                    Start with the team meeting scheduling (30 min) to unblock others, then dive into design review (2h) while energy is high. Save product spec for afternoon deep work session.
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">⏰ Time Allocation</div>
+                <div class="time-grid" id="timeAllocation">
+                    <div class="time-card">
+                        <div class="time-label">Deep Work</div>
+                        <div class="time-value">4.0h</div>
+                    </div>
+                    <div class="time-card">
+                        <div class="time-label">Meetings</div>
+                        <div class="time-value">2.0h</div>
+                    </div>
+                    <div class="time-card">
+                        <div class="time-label">Admin</div>
+                        <div class="time-value">1.0h</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">🚧 Blockers</div>
+                <div id="blockers">
+                    <div class="blocker-item">Waiting on design team feedback before finalizing spec</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">✅ Wins Yesterday</div>
+                <div id="wins">
+                    <div class="win-item">Completed competitor research analysis</div>
+                    <div class="win-item">Sent investor update ahead of schedule</div>
+                </div>
+            </div>
+            
+            <button class="ask-button" onclick="askFocus()">
+                🎯 What should I focus on right now?
+            </button>
+        </div>
+        
+        <div class="briefing-card">
+            <div class="section-title">📝 All Tasks</div>
+            <div class="task-grid" id="taskList">
+                <!-- Tasks will be populated by JS -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="focusModal">
+        <div class="modal-content">
+            <div class="modal-title">🎯 Focus Recommendation</div>
+            <div class="recommendation" id="recommendation">
+                Based on your current context and energy level, here's what you should focus on...
+            </div>
+            <button class="close-button" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+    
+    <script>
+        const mockTasks = [
+            {
+                title: "Schedule team meeting",
+                priority: "high",
+                deadline: "6h",
+                estimated: "0.5h",
+                status: "todo"
+            },
+            {
+                title: "Review design mockups",
+                priority: "medium",
+                deadline: "24h",
+                estimated: "2.0h",
+                status: "todo"
+            },
+            {
+                title: "Finish product spec",
+                priority: "high",
+                deadline: "48h",
+                estimated: "4.0h",
+                status: "in_progress"
+            },
+            {
+                title: "Research competitors",
+                priority: "medium",
+                deadline: "None",
+                estimated: "3.0h",
+                status: "todo"
+            },
+            {
+                title: "Update investors",
+                priority: "low",
+                deadline: "5d",
+                estimated: "1.0h",
+                status: "todo"
+            }
+        ];
+        
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = mockTasks.map(task => `
+                <div class="task-card">
+                    <div class="task-header">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-priority priority-${task.priority}">${task.priority.toUpperCase()}</div>
+                    </div>
+                    <div class="task-meta">
+                        <span>⏰ ${task.deadline}</span>
+                        <span>📊 ${task.estimated}</span>
+                        <span>📍 ${task.status.replace('_', ' ')}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function askFocus() {
+            const modal = document.getElementById('focusModal');
+            const recommendation = document.getElementById('recommendation');
+            
+            // Simulate AI recommendation
+            const now = new Date();
+            const hour = now.getHours();
+            
+            let rec = "";
+            if (hour >= 9 && hour < 12) {
+                rec = `<strong>RIGHT NOW (High Energy):</strong><br><br>
+                Focus on the <strong>design review</strong> for the next 2 hours. This requires creative thinking and you're at peak energy.<br><br>
+                <strong>Why:</strong> It's due in 24h, requires deep focus, and unblocks the product spec work.<br><br>
+                <strong>Next:</strong> After lunch, tackle the product spec (4h deep work session).<br><br>
+                <strong>Quick win:</strong> Spend 15 minutes scheduling that team meeting first to unblock others.`;
+            } else if (hour >= 14 && hour < 17) {
+                rec = `<strong>RIGHT NOW (Medium Energy):</strong><br><br>
+                Dive into the <strong>product spec</strong> for 2-3 hours. You have good focus and this is your most important deliverable.<br><br>
+                <strong>Why:</strong> 48h deadline, requires sustained concentration, and you're in a good flow state.<br><br>
+                <strong>Next:</strong> Take a break, then handle the investor update (low priority, low energy task).<br><br>
+                <strong>Avoid:</strong> Don't start new research now - save that for tomorrow morning.`;
+            } else {
+                rec = `<strong>RIGHT NOW (Lower Energy):</strong><br><br>
+                Handle the <strong>investor update</strong> (1h). This is important but doesn't require peak creativity.<br><br>
+                <strong>Why:</strong> It's due in 5 days, you can knock it out quickly, and it's a good task for current energy level.<br><br>
+                <strong>Next:</strong> Wrap up for the day or do light planning for tomorrow.<br><br>
+                <strong>Save for tomorrow:</strong> Design review and product spec work when you're fresh.`;
+            }
+            
+            recommendation.innerHTML = rec;
+            modal.classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('focusModal').classList.remove('show');
+        }
+        
+        // Initialize
+        renderTasks();
+        
+        // Update date
+        const now = new Date();
+        document.getElementById('briefingDate').textContent = 
+            now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+    </script>
+</body>
+</html>

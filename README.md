@@ -83,6 +83,24 @@ Eval-as-a-service, but local. Autonomous evaluation system for LLM outputs.
 - Identifies patterns in failures
 - Makes pass/fail decisions autonomously
 
+### [Personal Chief of Staff](personal-chief-of-staff/)
+A local AI that runs your life ops. Self-hosted, proactive, and memory-enabled.
+
+**What it does:**
+- Generates daily briefings with priorities and warnings
+- Autonomously re-ranks tasks based on context
+- Proactively warns about approaching deadlines
+- Provides context switching support
+- Answers "What should I focus on today?"
+
+**Why it's agentic:**
+- Learns your work patterns and energy levels
+- Reasons about urgency vs importance tradeoffs
+- Aligns daily tasks with long-term goals
+- Proactively identifies conflicts and blockers
+- Adapts recommendations to current context
+- Makes decisions about priority ranking
+
 ### [MomOps Agent](momops-agent/)
 Parenting operations assistant for new parents.
 
