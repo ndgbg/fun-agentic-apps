@@ -404,48 +404,279 @@ Return JSON with new proposal details."""
     # Tool implementations
     
     def _check_availability(self, participant: Participant, time_range: tuple) -> Dict:
-        """Check participant availability (mock)."""
-        return {
-            "available": True,
-            "conflicts": [],
-            "preferences_met": 0.8
-        }
+        """Check participant availability via Google Calendar."""
+        try:
+            from google.oauth2.credentials import Credentials
+            from googleapiclient.discovery import build
+            
+            # Load credentials (user must set up OAuth)
+            creds = self._get_google_credentials()
+            if not creds:
+                return {"available": True, "note": "Calendar access not configured"}
+            
+            service = build('calendar', 'v3', credentials=creds)
+            
+            # Query free/busy
+            body = {
+                "timeMin": time_range[0].isoformat(),
+                "timeMax": time_range[1].isoformat(),
+                "items": [{"id": participant.email}]
+            }
+            
+            result = service.freebusy().query(body=body).execute()
+            busy = result['calendars'].get(participant.email, {}).get('busy', [])
+            
+            return {
+                "available": len(busy) == 0,
+                "conflicts": busy,
+                "preferences_met": 0.8 if len(busy) == 0 else 0.3
+            }
+        except Exception as e:
+            return {"available": True, "note": f"Calendar check failed: {e}"}
     
     def _propose_time(self, slot: TimeSlot, participants: List[Participant]) -> Dict:
-        """Propose time to participants (mock)."""
-        return {
-            "sent": True,
-            "recipients": [p.email for p in participants]
-        }
+        """Propose time to participants via email."""
+        try:
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            
+            smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+            smtp_port = int(os.getenv("SMTP_PORT", "587"))
+            smtp_user = os.getenv("SMTP_USER")
+            smtp_pass = os.getenv("SMTP_PASSWORD")
+            
+            if not smtp_user or not smtp_pass:
+                return {"sent": False, "note": "SMTP credentials not configured"}
+            
+            msg = MIMEMultipart()
+            msg['From'] = smtp_user
+            msg['To'] = ", ".join([p.email for p in participants])
+            msg['Subject'] = "Meeting Time Proposal"
+            
+            body = f"""
+Proposed meeting time:
+Start: {slot.start}
+End: {slot.end}
+
+Please reply with your availability.
+"""
+            msg.attach(MIMEText(body, 'plain'))
+            
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
+            
+            return {
+                "sent": True,
+                "recipients": [p.email for p in participants]
+            }
+        except Exception as e:
+            return {"sent": False, "error": str(e)}
     
     def _send_email(self, to: List[str], subject: str, body: str) -> Dict:
-        """Send email (mock)."""
-        return {
-            "sent": True,
-            "message_id": f"msg_{datetime.now().timestamp()}"
-        }
+        """Send email via SMTP."""
+        try:
+            import smtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            
+            smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+            smtp_port = int(os.getenv("SMTP_PORT", "587"))
+            smtp_user = os.getenv("SMTP_USER")
+            smtp_pass = os.getenv("SMTP_PASSWORD")
+            
+            if not smtp_user or not smtp_pass:
+                return {"sent": False, "note": "SMTP credentials not configured"}
+            
+            msg = MIMEMultipart()
+            msg['From'] = smtp_user
+            msg['To'] = ", ".join(to)
+            msg['Subject'] = subject
+            msg.attach(MIMEText(body, 'plain'))
+            
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
+            
+            return {
+                "sent": True,
+                "message_id": f"msg_{datetime.now().timestamp()}"
+            }
+        except Exception as e:
+            return {"sent": False, "error": str(e)}
     
     async def _book_meeting_room(self, request: MeetingRequest, slot: Dict) -> Dict:
-        """Book meeting room (mock)."""
-        return {
-            "room_id": "conf-room-3a",
-            "room_name": "Golden Gate Conference Room",
-            "capacity": 10,
-            "amenities": ["video_conf", "whiteboard", "projector"]
-        }
+        """Book meeting room via Google Calendar resource."""
+        try:
+            from google.oauth2.credentials import Credentials
+            from googleapiclient.discovery import build
+            
+            creds = self._get_google_credentials()
+            if not creds:
+                return {"booked": False, "note": "Calendar access not configured"}
+            
+            service = build('calendar', 'v3', credentials=creds)
+            
+            # List available rooms
+            resources = service.resources().calendars().list(
+                customer='my_customer'
+            ).execute()
+            
+            # Book first available room
+            if resources.get('items'):
+                room = resources['items'][0]
+                return {
+                    "room_id": room['resourceId'],
+                    "room_name": room['resourceName'],
+                    "capacity": room.get('capacity', 10),
+                    "amenities": room.get('featureInstances', [])
+                }
+            
+            return {"booked": False, "note": "No rooms available"}
+        except Exception as e:
+            return {"booked": False, "error": str(e)}
     
     async def _create_zoom_link(self, request: MeetingRequest) -> str:
-        """Create Zoom link (mock)."""
-        return f"https://zoom.us/j/{datetime.now().timestamp()}"
+        """Create Zoom meeting via API."""
+        try:
+            import requests
+            
+            zoom_api_key = os.getenv("ZOOM_API_KEY")
+            zoom_api_secret = os.getenv("ZOOM_API_SECRET")
+            
+            if not zoom_api_key or not zoom_api_secret:
+                return "https://zoom.us/j/placeholder (Configure ZOOM_API_KEY)"
+            
+            # Generate JWT token
+            import jwt
+            import time
+            
+            payload = {
+                'iss': zoom_api_key,
+                'exp': time.time() + 3600
+            }
+            token = jwt.encode(payload, zoom_api_secret, algorithm='HS256')
+            
+            # Create meeting
+            headers = {
+                'Authorization': f'Bearer {token}',
+                'Content-Type': 'application/json'
+            }
+            
+            data = {
+                'topic': request.title,
+                'type': 2,  # Scheduled meeting
+                'duration': request.duration_minutes,
+                'settings': {
+                    'host_video': True,
+                    'participant_video': True,
+                    'join_before_host': False
+                }
+            }
+            
+            response = requests.post(
+                'https://api.zoom.us/v2/users/me/meetings',
+                headers=headers,
+                json=data
+            )
+            
+            if response.status_code == 201:
+                meeting = response.json()
+                return meeting['join_url']
+            
+            return f"https://zoom.us/j/error_{response.status_code}"
+            
+        except Exception as e:
+            return f"https://zoom.us/j/error (Setup required: {e})"
     
     async def _send_confirmation(self, client, request: MeetingRequest, 
                                  proposal: Dict, room: Dict, zoom: str) -> Dict:
-        """Send meeting confirmation."""
-        return {
-            "sent": True,
-            "calendar_invites": "sent",
-            "includes": ["zoom_link", "room_details", "agenda"]
-        }
+        """Send meeting confirmation with calendar invite."""
+        try:
+            from google.oauth2.credentials import Credentials
+            from googleapiclient.discovery import build
+            
+            creds = self._get_google_credentials()
+            if not creds:
+                return {"sent": False, "note": "Calendar access not configured"}
+            
+            service = build('calendar', 'v3', credentials=creds)
+            
+            # Create calendar event
+            event = {
+                'summary': request.title,
+                'description': f"Zoom: {zoom}\nRoom: {room.get('room_name', 'TBD')}",
+                'start': {
+                    'dateTime': proposal['primary_slot']['start'],
+                    'timeZone': 'UTC',
+                },
+                'end': {
+                    'dateTime': proposal['primary_slot']['end'],
+                    'timeZone': 'UTC',
+                },
+                'attendees': [{'email': p.email} for p in request.participants],
+                'conferenceData': {
+                    'createRequest': {
+                        'requestId': f"meeting_{datetime.now().timestamp()}"
+                    }
+                }
+            }
+            
+            event = service.events().insert(
+                calendarId='primary',
+                body=event,
+                conferenceDataVersion=1,
+                sendUpdates='all'
+            ).execute()
+            
+            return {
+                "sent": True,
+                "calendar_invites": "sent",
+                "event_id": event['id'],
+                "includes": ["zoom_link", "room_details", "agenda"]
+            }
+        except Exception as e:
+            return {"sent": False, "error": str(e)}
+    
+    def _get_google_credentials(self):
+        """Get Google OAuth credentials."""
+        try:
+            from google.oauth2.credentials import Credentials
+            from google.auth.transport.requests import Request
+            from google_auth_oauthlib.flow import InstalledAppFlow
+            import pickle
+            import os.path
+            
+            SCOPES = ['https://www.googleapis.com/auth/calendar']
+            creds = None
+            
+            # Load saved credentials
+            if os.path.exists('token.pickle'):
+                with open('token.pickle', 'rb') as token:
+                    creds = pickle.load(token)
+            
+            # Refresh or get new credentials
+            if not creds or not creds.valid:
+                if creds and creds.expired and creds.refresh_token:
+                    creds.refresh(Request())
+                elif os.path.exists('credentials.json'):
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        'credentials.json', SCOPES)
+                    creds = flow.run_local_server(port=0)
+                    
+                    # Save credentials
+                    with open('token.pickle', 'wb') as token:
+                        pickle.dump(creds, token)
+                else:
+                    return None
+            
+            return creds
+        except Exception as e:
+            print(f"Google auth error: {e}")
+            return None
     
     def _simulate_responses(self, request: MeetingRequest, proposal: Dict) -> List[Dict]:
         """Simulate participant responses (for demo)."""

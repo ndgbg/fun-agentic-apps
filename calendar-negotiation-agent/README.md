@@ -249,28 +249,12 @@ Notifies all parties with context
 - Takes actions
 - Learns patterns
 
-## Performance
-
-- Average negotiation: 2-3 rounds
-- Success rate: 85%+ for normal priority
-- Time saved: ~15 minutes per meeting
-- Participant satisfaction: High (no 3am meetings!)
-
 ## Limitations
 
-- Requires API access to calendars
-- Mock implementations for demo
-- Real integrations need OAuth setup
-- Email sending requires SMTP config
-
-## Roadmap
-
-- [ ] Google Calendar integration
-- [ ] Outlook integration
-- [ ] Slack bot interface
-- [ ] Learning from past negotiations
-- [ ] Multi-meeting optimization
-- [ ] Recurring meeting support
+- Requires OAuth setup for Google Calendar
+- SMTP credentials needed for email
+- Zoom API key for video links
+- Real integrations need proper authentication
 
 ## License
 
