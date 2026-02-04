@@ -66,6 +66,23 @@ LangChain, but opinionated and visual. Build and execute multi-agent systems wit
 - Real tool integration (web search, calculator, file I/O)
 - Adaptive behavior based on previous outputs
 
+### [LLM Evaluation Agent](llm-evaluation-agent/)
+Eval-as-a-service, but local. Autonomous evaluation system for LLM outputs.
+
+**What it does:**
+- Autonomously generates evaluation rubrics
+- Scores outputs with detailed reasoning
+- Detects quality regressions automatically
+- Tracks hallucinations over time
+- Provides trend analysis and alerts
+
+**Why it's agentic:**
+- Analyzes tasks to create appropriate rubrics
+- Reasons about quality with evidence
+- Learns baselines and adapts over time
+- Identifies patterns in failures
+- Makes pass/fail decisions autonomously
+
 ### [MomOps Agent](momops-agent/)
 Parenting operations assistant for new parents.
 

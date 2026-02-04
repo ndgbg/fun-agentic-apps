@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Evaluation Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1em; }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #334155;
+        }
+        
+        .card h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #a78bfa;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .metric:last-child { border-bottom: none; }
+        
+        .metric-label {
+            color: #94a3b8;
+            font-size: 0.95em;
+        }
+        
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .metric-value.good { color: #10b981; }
+        .metric-value.warning { color: #f59e0b; }
+        .metric-value.bad { color: #ef4444; }
+        
+        .chart {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            height: 200px;
+            position: relative;
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 100%;
+            gap: 10px;
+        }
+        
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, #8b5cf6 0%, #6366f1 100%);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            min-height: 20px;
+            transition: all 0.3s;
+        }
+        
+        .bar:hover {
+            background: linear-gradient(180deg, #a78bfa 0%, #818cf8 100%);
+        }
+        
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
+            color: #94a3b8;
+            white-space: nowrap;
+        }
+        
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.85em;
+            font-weight: bold;
+            color: #e2e8f0;
+        }
+        
+        .trend-line {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .trend-icon {
+            font-size: 1.5em;
+        }
+        
+        .trend-icon.up { color: #10b981; }
+        .trend-icon.down { color: #ef4444; }
+        .trend-icon.stable { color: #94a3b8; }
+        
+        .evaluation-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .evaluation-item {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .evaluation-item.failed {
+            border-left-color: #ef4444;
+        }
+        
+        .evaluation-item.regression {
+            border-left-color: #f59e0b;
+        }
+        
+        .eval-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .eval-model {
+            font-weight: bold;
+            color: #a78bfa;
+        }
+        
+        .eval-score {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .eval-details {
+            font-size: 0.9em;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .badge.pass { background: #10b98120; color: #10b981; }
+        .badge.fail { background: #ef444420; color: #ef4444; }
+        .badge.regression { background: #f59e0b20; color: #f59e0b; }
+        
+        .hallucination-box {
+            background: #7f1d1d20;
+            border: 1px solid #7f1d1d;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        
+        .hallucination-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #7f1d1d40;
+            font-size: 0.9em;
+        }
+        
+        .hallucination-item:last-child { border-bottom: none; }
+        
+        button {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+        }
+        
+        .dimension-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .dimension-card {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .dimension-name {
+            font-size: 0.85em;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+        
+        .dimension-score {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #a78bfa;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 LLM Evaluation Dashboard</h1>
+        <p>Real-time monitoring of model quality, regressions, and hallucinations</p>
+    </div>
+    
+    <div class="container">
+        <div class="controls">
+            <button onclick="loadData()">🔄 Refresh Data</button>
+            <button onclick="exportReport()">📊 Export Report</button>
+            <button onclick="clearHistory()">🗑️ Clear History</button>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h2>📈 Overall Metrics</h2>
+                <div class="metric">
+                    <span class="metric-label">Total Evaluations</span>
+                    <span class="metric-value" id="totalEvals">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Pass Rate</span>
+                    <span class="metric-value good" id="passRate">0%</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Average Score</span>
+                    <span class="metric-value" id="avgScore">0.0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Regressions</span>
+                    <span class="metric-value warning" id="regressions">0</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>⚠️ Hallucination Tracking</h2>
+                <div class="metric">
+                    <span class="metric-label">Total Detected</span>
+                    <span class="metric-value bad" id="totalHallucinations">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Rate per Eval</span>
+                    <span class="metric-value" id="hallucinationRate">0.0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Trend</span>
+                    <span class="metric-value" id="hallucinationTrend">-</span>
+                </div>
+                <div class="trend-line">
+                    <span class="trend-icon" id="trendIcon">→</span>
+                    <span id="trendText">Stable</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🎯 Quality Trend</h2>
+                <div class="chart">
+                    <div class="bar-chart" id="trendChart">
+                        <!-- Bars will be generated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card" style="grid-column: 1 / -1;">
+                <h2>📊 Dimension Breakdown</h2>
+                <div class="dimension-scores" id="dimensionScores">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📋 Recent Evaluations</h2>
+            <div class="evaluation-list" id="evaluationList">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🚨 Recent Hallucinations</h2>
+            <div class="hallucination-box" id="hallucinationList">
+                <div class="hallucination-item">No hallucinations detected</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock data - in production, load from evaluation_state.json
+        let mockData = {
+            totalEvaluations: 15,
+            passRate: 0.867,
+            avgScore: 4.2,
+            regressions: 2,
+            hallucinations: {
+                total: 3,
+                rate: 0.2,
+                trend: "stable",
+                examples: [
+                    "Claimed Python was invented in 1985 (actually 1991)",
+                    "Stated that lists are immutable",
+                    "Confused dictionary with set operations"
+                ]
+            },
+            trend: {
+                scores: [3.8, 4.1, 4.3, 4.2, 4.5, 4.4, 4.2, 4.6],
+                labels: ["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"]
+            },
+            dimensions: [
+                { name: "Accuracy", score: 4.5 },
+                { name: "Relevance", score: 4.8 },
+                { name: "Coherence", score: 4.3 },
+                { name: "Completeness", score: 4.0 },
+                { name: "Safety", score: 5.0 },
+                { name: "Hallucination", score: 4.2 }
+            ],
+            recentEvaluations: [
+                {
+                    model: "claude-3-5-sonnet",
+                    score: 4.6,
+                    passed: true,
+                    regression: false,
+                    timestamp: "2026-02-03T16:30:00",
+                    hallucinations: 0
+                },
+                {
+                    model: "claude-3-5-sonnet",
+                    score: 4.2,
+                    passed: true,
+                    regression: false,
+                    timestamp: "2026-02-03T16:25:00",
+                    hallucinations: 0
+                },
+                {
+                    model: "claude-3-5-sonnet",
+                    score: 2.8,
+                    passed: false,
+                    regression: true,
+                    timestamp: "2026-02-03T16:20:00",
+                    hallucinations: 2
+                }
+            ]
+        };
+        
+        function loadData() {
+            // Update metrics
+            document.getElementById('totalEvals').textContent = mockData.totalEvaluations;
+            document.getElementById('passRate').textContent = (mockData.passRate * 100).toFixed(1) + '%';
+            document.getElementById('avgScore').textContent = mockData.avgScore.toFixed(1);
+            document.getElementById('regressions').textContent = mockData.regressions;
+            
+            // Hallucinations
+            document.getElementById('totalHallucinations').textContent = mockData.hallucinations.total;
+            document.getElementById('hallucinationRate').textContent = mockData.hallucinations.rate.toFixed(1);
+            document.getElementById('hallucinationTrend').textContent = mockData.hallucinations.trend;
+            
+            // Trend icon
+            const trendIcon = document.getElementById('trendIcon');
+            const trendText = document.getElementById('trendText');
+            if (mockData.hallucinations.trend === 'increasing') {
+                trendIcon.textContent = '↗';
+                trendIcon.className = 'trend-icon up';
+                trendText.textContent = 'Increasing';
+            } else if (mockData.hallucinations.trend === 'decreasing') {
+                trendIcon.textContent = '↘';
+                trendIcon.className = 'trend-icon down';
+                trendText.textContent = 'Decreasing';
+            } else {
+                trendIcon.textContent = '→';
+                trendIcon.className = 'trend-icon stable';
+                trendText.textContent = 'Stable';
+            }
+            
+            // Trend chart
+            renderTrendChart();
+            
+            // Dimension scores
+            renderDimensionScores();
+            
+            // Recent evaluations
+            renderEvaluations();
+            
+            // Hallucinations
+            renderHallucinations();
+        }
+        
+        function renderTrendChart() {
+            const chart = document.getElementById('trendChart');
+            const maxScore = Math.max(...mockData.trend.scores);
+            
+            chart.innerHTML = mockData.trend.scores.map((score, i) => {
+                const height = (score / 5) * 100;
+                return `
+                    <div class="bar" style="height: ${height}%">
+                        <div class="bar-value">${score.toFixed(1)}</div>
+                        <div class="bar-label">${mockData.trend.labels[i]}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderDimensionScores() {
+            const container = document.getElementById('dimensionScores');
+            container.innerHTML = mockData.dimensions.map(dim => `
+                <div class="dimension-card">
+                    <div class="dimension-name">${dim.name}</div>
+                    <div class="dimension-score">${dim.score.toFixed(1)}</div>
+                </div>
+            `).join('');
+        }
+        
+        function renderEvaluations() {
+            const list = document.getElementById('evaluationList');
+            list.innerHTML = mockData.recentEvaluations.map(eval => {
+                const statusClass = eval.regression ? 'regression' : (eval.passed ? '' : 'failed');
+                const statusBadge = eval.regression ? 
+                    '<span class="badge regression">REGRESSION</span>' :
+                    (eval.passed ? '<span class="badge pass">PASS</span>' : '<span class="badge fail">FAIL</span>');
+                
+                return `
+                    <div class="evaluation-item ${statusClass}">
+                        <div class="eval-header">
+                            <span class="eval-model">${eval.model}</span>
+                            <span class="eval-score">${eval.score.toFixed(1)}/5.0 ${statusBadge}</span>
+                        </div>
+                        <div class="eval-details">
+                            ${new Date(eval.timestamp).toLocaleString()} • 
+                            Hallucinations: ${eval.hallucinations}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderHallucinations() {
+            const list = document.getElementById('hallucinationList');
+            if (mockData.hallucinations.examples.length === 0) {
+                list.innerHTML = '<div class="hallucination-item">No hallucinations detected</div>';
+            } else {
+                list.innerHTML = mockData.hallucinations.examples.map(h => `
+                    <div class="hallucination-item">⚠️ ${h}</div>
+                `).join('');
+            }
+        }
+        
+        function exportReport() {
+            const report = {
+                generated: new Date().toISOString(),
+                ...mockData
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'evaluation_report.json';
+            a.click();
+        }
+        
+        function clearHistory() {
+            if (confirm('Clear all evaluation history?')) {
+                mockData.recentEvaluations = [];
+                mockData.hallucinations.examples = [];
+                loadData();
+            }
+        }
+        
+        // Load data on page load
+        loadData();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>

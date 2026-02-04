@@ -1,0 +1,122 @@
+{
+  "rubrics": {
+    "rubric_1738627200.0": {
+      "id": "rubric_1738627200.0",
+      "name": "Python Q&A Evaluation",
+      "task_type": "qa",
+      "criteria": [
+        {
+          "dimension": "accuracy",
+          "description": "Factual correctness of Python information",
+          "weight": 0.35,
+          "scoring_guide": {
+            "1": "Completely inaccurate or misleading",
+            "2": "Mostly inaccurate with some correct elements",
+            "3": "Partially accurate with notable errors",
+            "4": "Mostly accurate with minor errors",
+            "5": "Completely accurate and precise"
+          }
+        },
+        {
+          "dimension": "completeness",
+          "description": "Covers all aspects of the question",
+          "weight": 0.25,
+          "scoring_guide": {
+            "1": "Missing critical information",
+            "2": "Incomplete with major gaps",
+            "3": "Covers basics but lacks depth",
+            "4": "Comprehensive with minor omissions",
+            "5": "Thorough and complete coverage"
+          }
+        },
+        {
+          "dimension": "relevance",
+          "description": "Directly addresses the question asked",
+          "weight": 0.2,
+          "scoring_guide": {
+            "1": "Completely off-topic",
+            "2": "Tangentially related",
+            "3": "Somewhat relevant",
+            "4": "Mostly relevant",
+            "5": "Perfectly on-topic"
+          }
+        },
+        {
+          "dimension": "coherence",
+          "description": "Clear and logical explanation",
+          "weight": 0.15,
+          "scoring_guide": {
+            "1": "Incoherent or confusing",
+            "2": "Difficult to follow",
+            "3": "Understandable but unclear",
+            "4": "Clear with minor issues",
+            "5": "Crystal clear and logical"
+          }
+        },
+        {
+          "dimension": "hallucination",
+          "description": "Free from false or fabricated information",
+          "weight": 0.05,
+          "scoring_guide": {
+            "1": "Multiple false claims",
+            "2": "Contains significant fabrications",
+            "3": "Minor inaccuracies",
+            "4": "Mostly factual",
+            "5": "Completely factual"
+          }
+        }
+      ],
+      "created_at": "2026-02-03T16:00:00"
+    }
+  },
+  "baselines": {
+    "rubric_1738627200.0": 4.15
+  },
+  "history": [
+    {
+      "id": "eval_1738627210.0",
+      "rubric_id": "rubric_1738627200.0",
+      "model_name": "claude-3-5-sonnet",
+      "overall_score": 4.6,
+      "passed": true,
+      "regression_detected": false,
+      "hallucinations": [],
+      "timestamp": "2026-02-03T16:00:10"
+    },
+    {
+      "id": "eval_1738627220.0",
+      "rubric_id": "rubric_1738627200.0",
+      "model_name": "claude-3-5-sonnet",
+      "overall_score": 4.5,
+      "passed": true,
+      "regression_detected": false,
+      "hallucinations": [],
+      "timestamp": "2026-02-03T16:00:20"
+    },
+    {
+      "id": "eval_1738627230.0",
+      "rubric_id": "rubric_1738627200.0",
+      "model_name": "claude-3-5-sonnet",
+      "overall_score": 2.8,
+      "passed": false,
+      "regression_detected": true,
+      "hallucinations": [
+        "Claimed Python was invented in 1991 when answering about exception handling",
+        "Confused topic by discussing Python history instead of exceptions"
+      ],
+      "timestamp": "2026-02-03T16:00:30"
+    }
+  ],
+  "hallucination_log": [
+    {
+      "timestamp": "2026-02-03T16:00:30",
+      "model": "claude-3-5-sonnet",
+      "count": 2,
+      "examples": [
+        "Claimed Python was invented in 1991 when answering about exception handling",
+        "Confused topic by discussing Python history instead of exceptions"
+      ],
+      "overall_score": 2.8
+    }
+  ]
+}
