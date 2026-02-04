@@ -49,6 +49,23 @@ Your toughest stakeholder — automated. Reviews product specs using LLM reasoni
 - Adapts questions based on spec content
 - Provides evidence-based feedback
 
+### [Multi-Agent Workflow Playground](multi-agent-workflow-playground/)
+LangChain, but opinionated and visual. Build and execute multi-agent systems with drag-and-drop.
+
+**What it does:**
+- Drag-and-drop visual workflow builder
+- Configure agent roles, memory, and tools
+- Execute workflows with real LLM calls
+- Inspect execution traces and failures
+- Compare different architectures
+
+**Why it's agentic:**
+- Autonomous agent execution with decision-making
+- Dynamic routing based on conditions
+- Stateful memory (short-term, long-term, shared)
+- Real tool integration (web search, calculator, file I/O)
+- Adaptive behavior based on previous outputs
+
 ### [MomOps Agent](momops-agent/)
 Parenting operations assistant for new parents.
 

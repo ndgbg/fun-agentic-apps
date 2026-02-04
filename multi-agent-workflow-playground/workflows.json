@@ -1,0 +1,68 @@
+{
+  "d6cc34ac-d52c-494a-8446-3d0fa21dec4e": {
+    "id": "d6cc34ac-d52c-494a-8446-3d0fa21dec4e",
+    "name": "Research & Write",
+    "description": "Multi-agent workflow for research and content creation",
+    "entry_point": "d8a10457-7f21-46be-93f0-3607ae4dd1ae",
+    "created_at": "2026-02-03T16:24:49.770675",
+    "agents": [
+      {
+        "id": "d8a10457-7f21-46be-93f0-3607ae4dd1ae",
+        "name": "Researcher",
+        "role": "researcher",
+        "system_prompt": "You are a research agent. Gather information and provide comprehensive findings.",
+        "model": "claude-3-5-sonnet-20241022",
+        "temperature": 0.7,
+        "tools": [
+          {
+            "type": "web_search",
+            "name": "web_search",
+            "config": {}
+          }
+        ],
+        "memory": {
+          "type": "short_term",
+          "capacity": 10
+        }
+      },
+      {
+        "id": "f25cebfe-3086-4f25-9ec3-ca1bfc10420b",
+        "name": "Writer",
+        "role": "writer",
+        "system_prompt": "You are a writer. Create engaging content based on research findings.",
+        "model": "claude-3-5-sonnet-20241022",
+        "temperature": 0.7,
+        "tools": [],
+        "memory": {
+          "type": "short_term",
+          "capacity": 5
+        }
+      },
+      {
+        "id": "06d65076-6cc1-4f7a-81fa-1754893746d0",
+        "name": "Critic",
+        "role": "critic",
+        "system_prompt": "You are a critic. Review content and provide constructive feedback.",
+        "model": "claude-3-5-sonnet-20241022",
+        "temperature": 0.7,
+        "tools": [],
+        "memory": {
+          "type": "shared",
+          "capacity": 1000
+        }
+      }
+    ],
+    "connections": [
+      {
+        "from": "d8a10457-7f21-46be-93f0-3607ae4dd1ae",
+        "to": "f25cebfe-3086-4f25-9ec3-ca1bfc10420b",
+        "condition": null
+      },
+      {
+        "from": "f25cebfe-3086-4f25-9ec3-ca1bfc10420b",
+        "to": "06d65076-6cc1-4f7a-81fa-1754893746d0",
+        "condition": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Workflow Playground</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 { font-size: 2em; margin-bottom: 5px; }
+        .header p { opacity: 0.9; }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .canvas {
+            flex: 1;
+            position: relative;
+            background: #fafafa;
+            overflow: auto;
+        }
+        
+        .agent-palette {
+            margin-bottom: 20px;
+        }
+        
+        .agent-template {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: grab;
+            border: 2px solid #ddd;
+        }
+        
+        .agent-template:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        
+        .agent-node {
+            position: absolute;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 180px;
+            cursor: move;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .agent-node.entry {
+            border-color: #28a745;
+            background: #f0fff0;
+        }
+        
+        .agent-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .agent-role {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .agent-tools {
+            font-size: 0.8em;
+            color: #888;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        button.secondary {
+            background: #6c757d;
+        }
+        
+        .execution-panel {
+            position: fixed;
+            bottom: 0;
+            left: 300px;
+            right: 0;
+            background: white;
+            border-top: 2px solid #ddd;
+            padding: 20px;
+            max-height: 40%;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .execution-panel.show {
+            display: block;
+        }
+        
+        .execution-step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .execution-step.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .step-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .step-content {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .input-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .input-modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .tool-selector {
+            margin: 10px 0;
+        }
+        
+        .tool-item {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 5px 10px;
+            margin: 3px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            cursor: pointer;
+        }
+        
+        .tool-item.selected {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎭 Multi-Agent Workflow Playground</h1>
+        <p>Build, visualize, and execute multi-agent systems</p>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <h3>Agent Palette</h3>
+            <div class="agent-palette">
+                <div class="agent-template" draggable="true" data-role="researcher">
+                    🔍 Researcher
+                    <div style="font-size: 0.8em; color: #666;">Gathers information</div>
+                </div>
+                <div class="agent-template" draggable="true" data-role="writer">
+                    ✍️ Writer
+                    <div style="font-size: 0.8em; color: #666;">Creates content</div>
+                </div>
+                <div class="agent-template" draggable="true" data-role="critic">
+                    🎯 Critic
+                    <div style="font-size: 0.8em; color: #666;">Reviews and refines</div>
+                </div>
+                <div class="agent-template" draggable="true" data-role="coordinator">
+                    🎪 Coordinator
+                    <div style="font-size: 0.8em; color: #666;">Orchestrates workflow</div>
+                </div>
+                <div class="agent-template" draggable="true" data-role="analyst">
+                    📊 Analyst
+                    <div style="font-size: 0.8em; color: #666;">Analyzes data</div>
+                </div>
+                <div class="agent-template" draggable="true" data-role="executor">
+                    ⚡ Executor
+                    <div style="font-size: 0.8em; color: #666;">Takes actions</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button onclick="runWorkflow()">▶️ Run Workflow</button>
+                <button onclick="saveWorkflow()">💾 Save Workflow</button>
+                <button onclick="loadWorkflow()" class="secondary">📂 Load Workflow</button>
+                <button onclick="exportWorkflow()" class="secondary">📤 Export JSON</button>
+                <button onclick="clearCanvas()" class="secondary">🗑️ Clear Canvas</button>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 6px; font-size: 0.85em;">
+                <strong>💡 How to use:</strong><br>
+                1. Drag agents to canvas<br>
+                2. Click agents to connect<br>
+                3. Configure each agent<br>
+                4. Run workflow
+            </div>
+        </div>
+        
+        <div class="canvas" id="canvas">
+            <div style="text-align: center; padding: 100px 20px; color: #999;">
+                <h2>Drag agents here to build your workflow</h2>
+                <p>Click agents to connect them</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="execution-panel" id="executionPanel">
+        <h3>Execution Results</h3>
+        <div id="executionResults"></div>
+    </div>
+    
+    <div class="input-modal" id="inputModal">
+        <div class="modal-content">
+            <h3>Configure Agent</h3>
+            <input type="text" id="agentName" placeholder="Agent Name">
+            <textarea id="systemPrompt" placeholder="System prompt for this agent..."></textarea>
+            
+            <label>Tools:</label>
+            <div class="tool-selector">
+                <div class="tool-item" onclick="toggleTool(this, 'web_search')">🔍 Web Search</div>
+                <div class="tool-item" onclick="toggleTool(this, 'calculator')">🔢 Calculator</div>
+                <div class="tool-item" onclick="toggleTool(this, 'file_reader')">📄 File Reader</div>
+                <div class="tool-item" onclick="toggleTool(this, 'code_executor')">💻 Code Executor</div>
+            </div>
+            
+            <label>Memory:</label>
+            <select id="memoryType">
+                <option value="none">No Memory</option>
+                <option value="short_term">Short-term</option>
+                <option value="long_term">Long-term</option>
+                <option value="shared">Shared</option>
+            </select>
+            
+            <button onclick="saveAgentConfig()">Save</button>
+            <button onclick="closeModal()" class="secondary">Cancel</button>
+        </div>
+    </div>
+    
+    <script>
+        let agents = [];
+        let connections = [];
+        let selectedAgent = null;
+        let connectingFrom = null;
+        let currentConfigAgent = null;
+        let selectedTools = [];
+        
+        // Drag and drop
+        document.querySelectorAll('.agent-template').forEach(template => {
+            template.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('role', template.dataset.role);
+            });
+        });
+        
+        document.getElementById('canvas').addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+        
+        document.getElementById('canvas').addEventListener('drop', (e) => {
+            e.preventDefault();
+            const role = e.dataTransfer.getData('role');
+            createAgent(role, e.clientX - 300, e.clientY - 80);
+        });
+        
+        function createAgent(role, x, y) {
+            const agent = {
+                id: 'agent_' + Date.now(),
+                role: role,
+                name: role.charAt(0).toUpperCase() + role.slice(1),
+                x: x,
+                y: y,
+                tools: [],
+                memory: 'none',
+                systemPrompt: `You are a ${role} agent.`
+            };
+            
+            agents.push(agent);
+            renderAgent(agent);
+        }
+        
+        function renderAgent(agent) {
+            const node = document.createElement('div');
+            node.className = 'agent-node';
+            if (agents.indexOf(agent) === 0) node.classList.add('entry');
+            node.id = agent.id;
+            node.style.left = agent.x + 'px';
+            node.style.top = agent.y + 'px';
+            
+            const roleEmoji = {
+                'researcher': '🔍',
+                'writer': '✍️',
+                'critic': '🎯',
+                'coordinator': '🎪',
+                'analyst': '📊',
+                'executor': '⚡'
+            };
+            
+            node.innerHTML = `
+                <div class="agent-header">
+                    <span>${roleEmoji[agent.role]} ${agent.name}</span>
+                    <button class="delete-btn" onclick="deleteAgent('${agent.id}')">×</button>
+                </div>
+                <div class="agent-role">${agent.role}</div>
+                <div class="agent-tools">${agent.tools.length} tools | ${agent.memory} memory</div>
+            `;
+            
+            node.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-btn')) return;
+                handleAgentClick(agent.id);
+            });
+            
+            node.addEventListener('dblclick', () => {
+                configureAgent(agent.id);
+            });
+            
+            makeDraggable(node);
+            document.getElementById('canvas').appendChild(node);
+        }
+        
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            element.onmousedown = dragMouseDown;
+            
+            function dragMouseDown(e) {
+                if (e.target.classList.contains('delete-btn')) return;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+        
+        function handleAgentClick(agentId) {
+            if (connectingFrom === null) {
+                connectingFrom = agentId;
+                document.getElementById(agentId).style.borderColor = '#28a745';
+            } else if (connectingFrom !== agentId) {
+                connections.push({ from: connectingFrom, to: agentId });
+                document.getElementById(connectingFrom).style.borderColor = '#667eea';
+                connectingFrom = null;
+                renderConnections();
+            }
+        }
+        
+        function renderConnections() {
+            // Simple connection rendering (in production, use SVG or canvas)
+            console.log('Connections:', connections);
+        }
+        
+        function configureAgent(agentId) {
+            const agent = agents.find(a => a.id === agentId);
+            if (!agent) return;
+            
+            currentConfigAgent = agent;
+            selectedTools = [...agent.tools];
+            
+            document.getElementById('agentName').value = agent.name;
+            document.getElementById('systemPrompt').value = agent.systemPrompt;
+            document.getElementById('memoryType').value = agent.memory;
+            
+            // Update tool selection
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            document.getElementById('inputModal').classList.add('show');
+        }
+        
+        function toggleTool(element, toolName) {
+            element.classList.toggle('selected');
+            const index = selectedTools.indexOf(toolName);
+            if (index > -1) {
+                selectedTools.splice(index, 1);
+            } else {
+                selectedTools.push(toolName);
+            }
+        }
+        
+        function saveAgentConfig() {
+            if (!currentConfigAgent) return;
+            
+            currentConfigAgent.name = document.getElementById('agentName').value;
+            currentConfigAgent.systemPrompt = document.getElementById('systemPrompt').value;
+            currentConfigAgent.memory = document.getElementById('memoryType').value;
+            currentConfigAgent.tools = [...selectedTools];
+            
+            // Re-render agent
+            const node = document.getElementById(currentConfigAgent.id);
+            if (node) {
+                node.querySelector('.agent-header span').textContent = 
+                    node.querySelector('.agent-header span').textContent.split(' ')[0] + ' ' + currentConfigAgent.name;
+                node.querySelector('.agent-tools').textContent = 
+                    `${currentConfigAgent.tools.length} tools | ${currentConfigAgent.memory} memory`;
+            }
+            
+            closeModal();
+        }
+        
+        function closeModal() {
+            document.getElementById('inputModal').classList.remove('show');
+            currentConfigAgent = null;
+            selectedTools = [];
+        }
+        
+        function deleteAgent(agentId) {
+            agents = agents.filter(a => a.id !== agentId);
+            connections = connections.filter(c => c.from !== agentId && c.to !== agentId);
+            document.getElementById(agentId).remove();
+        }
+        
+        function clearCanvas() {
+            if (confirm('Clear all agents and connections?')) {
+                agents = [];
+                connections = [];
+                document.getElementById('canvas').innerHTML = `
+                    <div style="text-align: center; padding: 100px 20px; color: #999;">
+                        <h2>Drag agents here to build your workflow</h2>
+                        <p>Click agents to connect them</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function runWorkflow() {
+            if (agents.length === 0) {
+                alert('Add agents first!');
+                return;
+            }
+            
+            const input = prompt('Enter initial input for the workflow:');
+            if (!input) return;
+            
+            document.getElementById('executionPanel').classList.add('show');
+            document.getElementById('executionResults').innerHTML = '<div>🚀 Executing workflow...</div>';
+            
+            // Build workflow JSON
+            const workflow = {
+                agents: agents.map(a => ({
+                    id: a.id,
+                    name: a.name,
+                    role: a.role,
+                    system_prompt: a.systemPrompt,
+                    tools: a.tools,
+                    memory: a.memory
+                })),
+                connections: connections,
+                entry_point: agents[0].id
+            };
+            
+            // Simulate execution (in real version, call backend)
+            setTimeout(() => {
+                const results = agents.map((agent, i) => ({
+                    agent_name: agent.name,
+                    input: i === 0 ? input : `Output from ${agents[i-1].name}`,
+                    output: `${agent.name} processed the input using ${agent.tools.length} tools`,
+                    tools_used: agent.tools,
+                    execution_time: Math.random() * 2 + 0.5
+                }));
+                
+                displayResults(results);
+            }, 2000);
+        }
+        
+        function displayResults(results) {
+            const html = results.map((r, i) => `
+                <div class="execution-step">
+                    <div class="step-header">${i + 1}. ${r.agent_name}</div>
+                    <div class="step-content">
+                        <strong>Input:</strong> ${r.input.substring(0, 100)}...<br>
+                        <strong>Output:</strong> ${r.output}<br>
+                        <strong>Tools:</strong> ${r.tools_used.join(', ') || 'None'}<br>
+                        <strong>Time:</strong> ${r.execution_time.toFixed(2)}s
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('executionResults').innerHTML = html;
+        }
+        
+        function saveWorkflow() {
+            const workflow = {
+                agents: agents,
+                connections: connections,
+                saved_at: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(workflow, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'workflow.json';
+            a.click();
+        }
+        
+        function loadWorkflow() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const workflow = JSON.parse(event.target.result);
+                    clearCanvas();
+                    agents = workflow.agents;
+                    connections = workflow.connections;
+                    agents.forEach(renderAgent);
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+        
+        function exportWorkflow() {
+            const mermaid = generateMermaid();
+            alert('Mermaid diagram copied to clipboard!\n\n' + mermaid);
+            navigator.clipboard.writeText(mermaid);
+        }
+        
+        function generateMermaid() {
+            let lines = ['```mermaid', 'graph TD'];
+            
+            agents.forEach(agent => {
+                lines.push(`    ${agent.id}[${agent.name}]`);
+            });
+            
+            connections.forEach(conn => {
+                lines.push(`    ${conn.from} --> ${conn.to}`);
+            });
+            
+            lines.push('```');
+            return lines.join('\n');
+        }
+    </script>
+</body>
+</html>
