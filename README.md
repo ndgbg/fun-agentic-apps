@@ -15,6 +15,29 @@ These aren't just smart apps — they're **autonomous agents** that:
 - 📈 Learn from patterns and adapt recommendations
 - 🎪 Pursue goals autonomously
 
+## 🤖 Apps
+
+### [AI Product Review Board](ai-review-board/)
+Your toughest stakeholder — automated. Reviews product specs using LLM reasoning.
+
+**What it does:**
+- Flags critical issues with evidence from your spec
+- Asks brutal questions from 6 personas (CTO, CEO, User Advocate, Risk Manager, AI Ethics, Finance)
+- Suggests specific improvements
+- Answers follow-up questions
+
+**Why it's agentic:**
+- Understands context, not just pattern matching
+- Reasons about implications and consequences
+- Adapts questions based on spec content
+- Provides evidence-based feedback
+
+### [MomOps Agent](momops-agent/)
+Parenting operations assistant for new parents.
+
+### [Montessori AI Agent](montessori-ai-agent/)
+Educational activity planner for children.
+
 ## 🤝 Contributing
 
 Want to add your own agentic app? We welcome contributions!
