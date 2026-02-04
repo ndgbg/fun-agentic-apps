@@ -118,12 +118,6 @@ improvements = board.suggest_improvements(
 
 **Speed:** 5 seconds vs. days of waiting.
 
-## Cost
-
-Uses Claude 3.5 Sonnet: ~$0.01-0.05 per review
-
-Worth it for the quality of feedback.
-
 ## Integration Ideas
 
 - Slack bot for spec reviews
