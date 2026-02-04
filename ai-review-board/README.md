@@ -131,12 +131,6 @@ Worth it for the quality of feedback.
 - Notion integration
 - CLI tool: `review-spec my-prd.md`
 
-## Why It Spreads
-
-✅ **Funny + useful** - Makes reviews entertaining  
-✅ **Improves quality** - Catches real issues  
-✅ **Easy to demo** - Run it, get instant feedback  
-
 ## License
 
 MIT
