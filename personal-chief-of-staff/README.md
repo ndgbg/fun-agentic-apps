@@ -9,6 +9,10 @@ A local AI that runs your life ops. Self-hosted, proactive, and memory-enabled.
 - **Deadline warnings** - Proactive alerts for approaching deadlines
 - **Context switching support** - Minimizes cognitive load when switching tasks
 - **"What should I focus on today?"** - Intelligent focus recommendations
+- **Calendar integration** - Auto-import tasks from Google Calendar and Outlook
+- **Email integration** - Extract action items from Gmail and IMAP
+- **Slack/Teams notifications** - Daily briefings and meeting reminders
+- **Habit tracking** - Track exercise, sleep, and wellness with AI insights
 
 ## What's Different
 
@@ -17,6 +21,7 @@ Unlike todo apps or calendar tools:
 - **Self-hosted** - Your data stays local, runs on your machine
 - **Memory + goals** - Learns your patterns and aligns with long-term goals
 - **Proactive, not reactive** - Anticipates needs, doesn't wait for you to ask
+- **Real integrations** - Connects to your actual calendar, email, and chat tools
 
 ## Why It's Agentic
 
@@ -297,6 +302,101 @@ open dashboard.html
 - Focus recommendation button
 - Task list with status
 
+## Integrations
+
+### Calendar Integration
+
+Import tasks automatically from your calendar:
+
+```python
+from integrations.calendar_integration import GoogleCalendarIntegration
+
+calendar = GoogleCalendarIntegration()
+events = calendar.get_todays_events()
+
+# AI extracts tasks from events
+extractor = CalendarTaskExtractor(api_key)
+tasks = await extractor.extract_tasks_from_events(events)
+```
+
+**Supports:**
+- ✅ Google Calendar (OAuth)
+- ✅ Outlook/Microsoft Graph
+- ✅ Auto-extract prep and follow-up tasks
+- ✅ Meeting reminders
+
+### Email Integration
+
+Extract action items from emails:
+
+```python
+from integrations.email_integration import GmailIntegration
+
+gmail = GmailIntegration()
+emails = gmail.get_unread_emails()
+
+# AI extracts tasks from emails
+extractor = EmailTaskExtractor(api_key)
+tasks = await extractor.extract_tasks_from_emails(emails)
+```
+
+**Supports:**
+- ✅ Gmail (OAuth)
+- ✅ Any IMAP provider
+- ✅ Priority detection
+- ✅ Deadline extraction
+
+### Slack/Teams Integration
+
+Send briefings and reminders:
+
+```python
+from integrations.slack_teams_integration import SlackIntegration
+
+slack = SlackIntegration()
+slack.send_daily_briefing("#general", briefing)
+slack.send_meeting_reminder("#general", meeting)
+slack.send_deadline_alert("#general", task)
+```
+
+**Supports:**
+- ✅ Slack (Bot API)
+- ✅ Microsoft Teams (Webhooks)
+- ✅ Daily briefings
+- ✅ Meeting reminders (15 min before)
+- ✅ Deadline alerts
+
+### Habit Tracking
+
+Track wellness and get insights:
+
+```python
+from integrations.habit_tracking import HabitTracker, HabitType
+
+tracker = HabitTracker()
+
+# Set goals
+tracker.set_goal(HabitType.EXERCISE, 1.0, "daily", "hours")
+tracker.set_goal(HabitType.SLEEP, 8.0, "daily", "hours")
+
+# Log habits
+tracker.log_habit(HabitType.EXERCISE, 0.5, "Morning run", mood=4)
+
+# Get insights
+insights = tracker.get_insights()
+print(f"Exercise streak: {insights['streaks']['exercise']} days")
+```
+
+**Tracks:**
+- ✅ Exercise
+- ✅ Sleep
+- ✅ Meditation
+- ✅ Reading
+- ✅ Water intake
+- ✅ Nutrition
+
+**Setup:** See [integrations/SETUP.md](integrations/SETUP.md) for complete setup guide.
+
 ## State Persistence
 
 All data stored locally:
@@ -413,6 +513,7 @@ ChiefOfStaff
 **Storage**: Local JSON files  
 **Privacy**: All data stays on your machine  
 **Learning**: Continuous from task completions  
+**Integrations**: Google Calendar, Gmail, Slack, Teams, IMAP
 
 ## Comparison
 
@@ -426,6 +527,10 @@ ChiefOfStaff
 | Goal alignment | ❌ | ❌ | ✅ |
 | Context aware | ❌ | ❌ | ✅ |
 | Focus guidance | ❌ | ❌ | ✅ |
+| Calendar sync | ❌ | ✅ | ✅ |
+| Email parsing | ❌ | ❌ | ✅ |
+| Chat notifications | ❌ | ❌ | ✅ |
+| Habit tracking | ❌ | ❌ | ✅ |
 
 ## Best Practices
 
@@ -434,6 +539,8 @@ ChiefOfStaff
 3. **Set clear goals** - Agent aligns tasks to goals
 4. **Trust the ranking** - Agent considers factors you might miss
 5. **Use focus advisor** - When feeling scattered or overwhelmed
+6. **Connect integrations** - Let agent auto-import from calendar/email
+7. **Track habits** - Get insights on energy and productivity patterns
 
 ## Limitations
 
@@ -442,15 +549,30 @@ ChiefOfStaff
 - Learns over time (needs data to improve)
 - English language only
 
-## Future Enhancements
+## Complete Integration Example
 
-The architecture supports:
-- Calendar integration (Google, Outlook)
-- Email integration (auto-add tasks)
-- Slack/Teams integration (meeting reminders)
-- Mobile app (on-the-go briefings)
-- Team coordination (shared goals)
-- Habit tracking (exercise, sleep)
+See [integrations/full_integration_example.py](integrations/full_integration_example.py) for end-to-end workflow:
+
+```python
+# Morning workflow
+1. Import from calendar → Extract tasks
+2. Scan emails → Extract action items
+3. Check habits → Get insights
+4. Generate briefing → Send to Slack/Teams
+5. Get focus recommendation
+6. Save state
+```
+
+## Setup Integrations
+
+See [integrations/SETUP.md](integrations/SETUP.md) for detailed setup:
+
+- Google Calendar (OAuth)
+- Gmail (OAuth)
+- Outlook (Microsoft Graph)
+- Slack (Bot Token)
+- Teams (Webhook)
+- IMAP (Any provider)
 
 ## License
 
