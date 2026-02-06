@@ -5,12 +5,22 @@
 [![Google Calendar](https://img.shields.io/badge/Google-Calendar%20API-green.svg)](https://developers.google.com/calendar)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Sophisticated multi-agent system for proactive home maintenance management.**
+**Sophisticated multi-agent system for complete home management - maintenance, cleaning, and organization.**
 
-Never miss maintenance again. Predict failures before they happen. Optimize costs automatically.
+Never miss maintenance, cleaning, or organization tasks. Predict failures before they happen. Optimize costs automatically.
 
 ## What It Does
 
+**Tracks 19 comprehensive tasks:**
+- Home maintenance (HVAC, plumbing, electrical, safety)
+- Appliance care (washing machine every 3 weeks)
+- Seasonal tasks (winterization, outdoor faucet covers, spring prep)
+- Weekly cleaning (trash, vacuuming)
+- Monthly cleaning (refrigerator)
+- Quarterly deep cleaning (kitchen, bathrooms, pantry)
+- Seasonal organization (closets, garage, windows)
+
+**Intelligent features:**
 - **Predicts failures** - ML-powered analysis predicts system failures before they occur
 - **Optimizes scheduling** - Intelligent scheduling based on budget, time, weather, and season
 - **Generates alerts** - Contextual alerts for overdue tasks and predicted failures
@@ -183,19 +193,41 @@ home = HomeProfile(
 )
 ```
 
-## Maintenance Categories
+## Complete Task Coverage
 
-Tracks 9 categories with comprehensive tasks:
+**19 tasks across 11 categories:**
 
-1. **HVAC** - Filters (every 3 months), annual service, duct cleaning
-2. **Plumbing** - Water heater flush, pipes, fixtures
-3. **Electrical** - Panels, outlets, lighting
-4. **Appliances** - Washing machine cleaning (every 3 weeks), refrigerator, dryer
-5. **Exterior** - Roof, gutters, siding, paint
-6. **Interior** - Flooring, walls, doors, windows
-7. **Landscaping** - Lawn, trees, irrigation
-8. **Safety** - Smoke detectors (every 6 months), CO detectors, fire extinguishers
-9. **Seasonal** - Winterization (outdoor faucet covers, sprinkler blowout, HVAC prep), spring de-winterization
+### 1. HVAC (2 tasks)
+- Replace filters every 3 months
+- Annual professional service
+
+### 2. Plumbing (1 task)
+- Water heater flush annually
+
+### 3. Appliances (1 task)
+- **Washing machine cleaning every 3 weeks** (prevents mold, odors)
+
+### 4. Safety (1 task)
+- Test smoke detectors every 6 months
+
+### 5. Seasonal (4 tasks)
+- **Winterize outdoor faucets** (install insulated covers)
+- **Winterize sprinkler system** (professional blowout)
+- Winterize HVAC (cover AC unit)
+- Spring de-winterization
+
+### 6. Cleaning (6 tasks)
+- **Trash & recycling weekly**
+- **Vacuum carpets bi-weekly**
+- **Clean refrigerator monthly**
+- Deep clean kitchen quarterly
+- Deep clean bathrooms every 2 months
+- Clean windows twice yearly
+
+### 7. Organization (3 tasks)
+- **Organize pantry quarterly** (check dates, reorganize)
+- **Organize closets twice yearly** (seasonal rotation, donate)
+- **Organize garage twice yearly** (declutter, organize tools)
 
 ### Seasonal Tasks Included
 
