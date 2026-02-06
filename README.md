@@ -103,6 +103,25 @@ A local AI that runs your life ops. Self-hosted, proactive, and memory-enabled.
 - Adapts recommendations to current context
 - Makes decisions about priority ranking
 
+### [Home Maintenance Agent](home-maintenance-agent/)
+Sophisticated multi-agent system for proactive home maintenance management.
+
+**What it does:**
+- Predicts system failures before they occur (ML-powered)
+- Optimizes maintenance schedule (budget, time, weather, season)
+- Generates contextual alerts (overdue, predictive, weather-based)
+- Integrates with Google Calendar (auto-scheduling)
+- Optimizes costs (DIY vs professional, bulk purchasing)
+- Generates detailed maintenance guides
+
+**Why it's agentic:**
+- 6 specialized agents working in coordination
+- Predictive analytics using LLM reasoning
+- Multi-constraint optimization
+- Autonomous decision-making and scheduling
+- Real-time adaptation to conditions
+- Knowledge synthesis from maintenance data
+
 ### [MomOps Agent](momops-agent/)
 Parenting operations assistant for new parents.
 
