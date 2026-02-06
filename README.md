@@ -178,8 +178,6 @@ Autonomous agent that runs your applications and captures professional screensho
 - Goal-oriented (showcases key features)
 - Self-documenting (generates reports automatically)
 - Intelligent timing (knows when to capture)
-- Real LLM integration (OpenAI, Anthropic, Ollama)
-- Adapts difficulty based on child's progress
 
 ## 🤝 Contributing
 
