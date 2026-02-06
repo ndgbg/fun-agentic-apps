@@ -406,3 +406,33 @@ MIT
 ---
 
 Built with Claude 3.5 Sonnet. Part of the [Fun Agentic Apps](https://github.com/ndgbg/fun-agentic-apps) collection.
+
+## Household Chores & Cleaning
+
+The system now includes comprehensive household tasks:
+
+### Weekly Tasks
+- **Trash & recycling** - Take bins to curb (every 7 days)
+- **Vacuum carpets** - Deep vacuum, move furniture (every 14 days)
+
+### Monthly Tasks
+- **Clean refrigerator** - Shelves, drawers, check expiration dates (every 30 days)
+
+### Quarterly Tasks (Every 3 Months)
+- **Organize pantry** - Check dates, reorganize, wipe shelves
+- **Deep clean kitchen** - Oven, microwave, behind appliances, cabinets
+- **Deep clean bathrooms** - Scrub grout, clean fans, descale fixtures (every 2 months)
+
+### Seasonal Tasks (Twice Yearly)
+- **Organize closets** - Sort clothes, donate, seasonal rotation
+- **Clean windows** - Inside and out, screens, sills
+- **Organize garage** - Sweep, organize tools, declutter
+
+**Total tasks tracked: 19** (maintenance + cleaning + organization)
+
+All tasks include:
+- Automatic scheduling based on frequency
+- Time estimates
+- Priority levels
+- Seasonal considerations
+- Integration with calendar reminders

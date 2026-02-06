@@ -23,6 +23,8 @@ class MaintenanceCategory(Enum):
     LANDSCAPING = "landscaping"
     SAFETY = "safety"
     SEASONAL = "seasonal"
+    CLEANING = "cleaning"
+    ORGANIZATION = "organization"
 
 class Priority(Enum):
     CRITICAL = "critical"
@@ -694,6 +696,142 @@ class HomeMaintenanceOrchestrator:
                 next_due=(datetime.now() + timedelta(days=180)).isoformat(),  # Spring
                 estimated_cost=0.0,
                 estimated_hours=1.0,
+                requires_professional=False,
+                season_dependent=True,
+                weather_dependent=False
+            ),
+            # Cleaning & Organization Tasks
+            MaintenanceTask(
+                id="task_trash_weekly",
+                title="Take out trash and recycling",
+                category=MaintenanceCategory.CLEANING,
+                description="Take trash and recycling bins to curb",
+                priority=Priority.MEDIUM,
+                frequency_days=7,  # Weekly
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=7)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=0.25,
+                requires_professional=False,
+                season_dependent=False,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_clean_fridge",
+                title="Clean refrigerator",
+                category=MaintenanceCategory.CLEANING,
+                description="Clean shelves, drawers, check expiration dates, wipe down exterior",
+                priority=Priority.MEDIUM,
+                frequency_days=30,  # Monthly
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=30)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=1.0,
+                requires_professional=False,
+                season_dependent=False,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_clean_pantry",
+                title="Organize and clean pantry",
+                category=MaintenanceCategory.ORGANIZATION,
+                description="Check expiration dates, reorganize, wipe shelves, restock",
+                priority=Priority.LOW,
+                frequency_days=90,  # Quarterly
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=90)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=1.5,
+                requires_professional=False,
+                season_dependent=False,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_clean_closets",
+                title="Organize closets",
+                category=MaintenanceCategory.ORGANIZATION,
+                description="Sort clothes, donate unused items, reorganize, seasonal rotation",
+                priority=Priority.LOW,
+                frequency_days=180,  # Twice yearly
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=180)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=3.0,
+                requires_professional=False,
+                season_dependent=True,  # Spring and fall
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_deep_clean_kitchen",
+                title="Deep clean kitchen",
+                category=MaintenanceCategory.CLEANING,
+                description="Clean oven, microwave, behind appliances, cabinets, floors",
+                priority=Priority.MEDIUM,
+                frequency_days=90,  # Quarterly
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=90)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=3.0,
+                requires_professional=False,
+                season_dependent=False,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_deep_clean_bathrooms",
+                title="Deep clean bathrooms",
+                category=MaintenanceCategory.CLEANING,
+                description="Scrub grout, clean exhaust fans, descale fixtures, organize cabinets",
+                priority=Priority.MEDIUM,
+                frequency_days=60,  # Every 2 months
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=60)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=2.0,
+                requires_professional=False,
+                season_dependent=False,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_clean_windows",
+                title="Clean windows inside and out",
+                category=MaintenanceCategory.CLEANING,
+                description="Wash windows, clean screens, wipe sills and tracks",
+                priority=Priority.LOW,
+                frequency_days=180,  # Twice yearly
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=180)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=2.0,
+                requires_professional=False,
+                season_dependent=True,  # Spring and fall
+                weather_dependent=True
+            ),
+            MaintenanceTask(
+                id="task_vacuum_carpets",
+                title="Deep vacuum and carpet cleaning",
+                category=MaintenanceCategory.CLEANING,
+                description="Vacuum all carpets, move furniture, spot clean stains",
+                priority=Priority.MEDIUM,
+                frequency_days=14,  # Bi-weekly
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=14)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=1.0,
+                requires_professional=False,
+                season_dependent=False,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_clean_garage",
+                title="Organize and clean garage",
+                category=MaintenanceCategory.ORGANIZATION,
+                description="Sweep floor, organize tools, dispose of hazardous materials, declutter",
+                priority=Priority.LOW,
+                frequency_days=180,  # Twice yearly
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=180)).isoformat(),
+                estimated_cost=0.0,
+                estimated_hours=3.0,
                 requires_professional=False,
                 season_dependent=True,
                 weather_dependent=False
