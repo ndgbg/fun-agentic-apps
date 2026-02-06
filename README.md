@@ -161,6 +161,27 @@ Autonomous AI assistant for Montessori-based early childhood development.
 - Real LLM integration (OpenAI, Anthropic, Ollama)
 - Adapts difficulty based on child's progress
 
+### [Demo Screenshot Agent](demo-screenshot-agent/)
+Autonomous agent that runs your applications and captures professional screenshots.
+
+**What it does:**
+- Controls real browsers using Playwright
+- Generates realistic demo scenarios using LLM
+- Intelligently interacts with UI (analyzes, clicks, fills)
+- Captures screenshots at perfect moments
+- Generates organized markdown reports
+- Demos multiple apps in sequence
+
+**Why it's agentic:**
+- Autonomous exploration (no predefined scripts)
+- Visual reasoning (analyzes page content)
+- Adaptive behavior (adjusts based on what it sees)
+- Goal-oriented (showcases key features)
+- Self-documenting (generates reports automatically)
+- Intelligent timing (knows when to capture)
+- Real LLM integration (OpenAI, Anthropic, Ollama)
+- Adapts difficulty based on child's progress
+
 ## 🤝 Contributing
 
 Want to add your own agentic app? We welcome contributions!
