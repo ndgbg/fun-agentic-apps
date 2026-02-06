@@ -159,7 +159,6 @@ Autonomous AI assistant for Montessori-based early childhood development.
 - Autonomously generates personalized activities
 - Continuous learning loop (observe → reason → act → learn)
 - Real LLM integration (OpenAI, Anthropic, Ollama)
-- Adapts difficulty based on child's progress
 
 ### [Demo Screenshot Agent](demo-screenshot-agent/)
 Autonomous agent that runs your applications and captures professional screenshots.
