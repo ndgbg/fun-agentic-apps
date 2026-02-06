@@ -68,26 +68,8 @@ function ChatAgent({ activities, babyName, babyBirthDate, onClose, embedded }) {
   }
 
   const generateResponse = async (question) => {
-    if (llmStatus === 'ready') {
-      // Use LLM for intelligent response
-      const babyContext = {
-        babyName,
-        babyAge: getBabyAge(),
-        recentActivities: activities.slice(0, 20),
-        patterns: analyzeSchedule()
-      }
-
-      try {
-        const response = await llmService.generateChatResponse(question, babyContext)
-        return response
-      } catch (error) {
-        console.error('LLM chat failed, falling back to rule-based:', error)
-        return generateFallbackResponse(question)
-      }
-    } else {
-      // Fallback to rule-based responses
-      return generateFallbackResponse(question)
-    }
+    // Always use fallback for demo reliability
+    return generateFallbackResponse(question)
   }
 
   const generateFallbackResponse = (question) => {
@@ -97,11 +79,23 @@ function ChatAgent({ activities, babyName, babyBirthDate, onClose, embedded }) {
     const babyRef = babyName || 'your baby'
     
     // Feeding questions
-    if (q.includes('feed') || q.includes('eat') || q.includes('hungry') || q.includes('bottle') || q.includes('breast')) {
+    if (q.includes('feed') || q.includes('eat') || q.includes('hungry') || q.includes('bottle') || q.includes('breast') || q.includes('last') || q.includes('when')) {
       if (stats.lastFeed) {
         const minutesAgo = Math.round((new Date() - new Date(stats.lastFeed.timestamp)) / 60000)
         const hoursAgo = Math.floor(minutesAgo / 60)
-        return `${babyRef} last fed ${hoursAgo}h ${minutesAgo % 60}m ago. Babies typically feed every 2-3 hours. ${minutesAgo > 180 ? "It might be time for another feeding soon!" : "You're on track!"}\n\nTip: Watch for hunger cues like rooting, sucking on hands, or fussiness.`
+        const mins = minutesAgo % 60
+        
+        let timeStr = ''
+        if (hoursAgo > 0) {
+          timeStr = `${hoursAgo} hour${hoursAgo > 1 ? 's' : ''} and ${mins} minute${mins !== 1 ? 's' : ''} ago`
+        } else {
+          timeStr = `${mins} minute${mins !== 1 ? 's' : ''} ago`
+        }
+        
+        const feedType = stats.lastFeed.feedType === 'bottle' ? 'bottle' : 'breastfed'
+        const amount = stats.lastFeed.amount ? ` (${stats.lastFeed.amount}oz)` : ''
+        
+        return `${babyRef} was last fed ${timeStr}. It was a ${feedType} feeding${amount}.\n\nBabies typically feed every 2-3 hours. ${minutesAgo > 180 ? "It might be time for another feeding soon!" : "You're on track!"}`
       }
       return "I don't see any feeding records yet. Start tracking to get personalized insights!"
     }

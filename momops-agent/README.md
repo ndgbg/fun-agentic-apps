@@ -4,6 +4,10 @@ New parents struggle to track feeding, sleep, and diaper patterns while managing
 
 **Built with:** React 18, Vite, CSS3, LocalStorage + **Lightweight LLM Integration**
 
+## 🎥 Demo
+
+https://github.com/user-attachments/assets/c21db00e-6064-d47e-8f3d-33a5422ddf1b
+
 ## 🤖 Autonomous AI Features
 
 **Continuous Monitoring** - Autonomous agent runs in background, analyzing patterns and detecting when action is needed

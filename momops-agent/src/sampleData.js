@@ -10,6 +10,12 @@ export const generateSampleData = () => {
     return date.toISOString()
   }
   
+  const minutesAgo = (minutes) => {
+    const date = new Date(now)
+    date.setMinutes(date.getMinutes() - minutes)
+    return date.toISOString()
+  }
+  
   const daysAgo = (days, hours = 0, minutes = 0) => {
     const date = new Date(now)
     date.setDate(date.getDate() - days)
@@ -239,6 +245,37 @@ export const generateSampleData = () => {
   activities.push(...generateDiapers(0, daysOfHistory))
   activities.push(...generateMedications(0, daysOfHistory))
   activities.push(...generateOtherActivities(0, daysOfHistory))
+  
+  // Add very recent activities (last few hours) for realistic "last feed" display
+  const recentId = Date.now() + 999999
+  
+  // Last feed 2 hours ago
+  activities.push({
+    id: recentId + 1,
+    type: 'feed',
+    feedType: 'bottle',
+    amount: 4,
+    timestamp: hoursAgo(2),
+    notes: 'Good feeding'
+  })
+  
+  // Last nap 1 hour ago (30 min duration)
+  activities.push({
+    id: recentId + 2,
+    type: 'nap',
+    startTime: minutesAgo(90),
+    endTime: minutesAgo(60),
+    duration: 30,
+    timestamp: minutesAgo(90)
+  })
+  
+  // Last diaper 45 minutes ago
+  activities.push({
+    id: recentId + 3,
+    type: 'diaper',
+    diaperType: 'pee',
+    timestamp: minutesAgo(45)
+  })
   
   return activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
 }
