@@ -116,15 +116,6 @@ Sophisticated multi-agent system for complete home management - maintenance, cle
 - Optimizes costs (DIY vs professional, bulk purchasing)
 - Generates detailed guides for every task
 
-**Comprehensive coverage:**
-- Home maintenance (HVAC, plumbing, electrical, safety)
-- Appliances (washing machine every 3 weeks, etc.)
-- Seasonal tasks (winterization, outdoor faucet covers, spring prep)
-- Weekly cleaning (trash, vacuuming)
-- Monthly cleaning (refrigerator)
-- Quarterly deep cleaning (kitchen, bathrooms, pantry)
-- Seasonal organization (closets, garage, windows)
-
 **Why it's agentic:**
 - 6 specialized agents working in coordination
 - Predictive analytics using LLM reasoning
