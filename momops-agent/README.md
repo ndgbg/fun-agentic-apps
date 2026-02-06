@@ -20,17 +20,28 @@ https://github.com/user-attachments/assets/c21db00e-6064-d47e-8f3d-33a5422ddf1b
 
 ## Core Features
 
-**🏠 Home Dashboard** - Quick-log activities with AI-powered recommendations displayed prominently
+### 🏠 Home Dashboard
+Quick-log activities with AI-powered recommendations displayed prominently
 
-**📊 Insights & Analytics** - Visual charts, pattern analysis, and intelligent daily insights powered by autonomous monitoring
+![Dashboard](screenshot-dashboard.png)
 
-**🤖 Agent Dashboard** - View detailed AI reasoning, recommendation confidence scores, and autonomous decision-making process
+### 📊 Insights & Analytics
+Visual charts, pattern analysis, and intelligent daily insights powered by autonomous monitoring
 
-**💬 Intelligent Chat** - LLM-powered assistant for parenting questions with contextual awareness of your baby's data
+![Analytics](screenshot-analytics.png)
 
-**📅 Schedule Manager** - Track caregiver schedules with hourly rates and cumulative hours
+### 💬 Intelligent Chat
+LLM-powered assistant for parenting questions with contextual awareness of your baby's data
 
-**👶 Baby Profile** - Track milestones, age, and memories with AI-suggested developmental activities
+![Chat](screenshot-chat.png)
+
+### 📅 Schedule Manager
+Track caregiver schedules with hourly rates and cumulative hours
+
+![Schedule](screenshot-schedule.png)
+
+### 👶 Baby Profile
+Track milestones, age, and memories with AI-suggested developmental activities
 
 ## LLM Integration
 
