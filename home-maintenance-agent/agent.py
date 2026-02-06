@@ -623,6 +623,81 @@ class HomeMaintenanceOrchestrator:
                 season_dependent=False,
                 weather_dependent=False
             ),
+            MaintenanceTask(
+                id="task_washing_machine",
+                title="Clean washing machine",
+                category=MaintenanceCategory.APPLIANCES,
+                description="Run cleaning cycle and drain water to prevent mold and odors",
+                priority=Priority.MEDIUM,
+                frequency_days=21,  # Every 3 weeks
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=21)).isoformat(),
+                estimated_cost=5.0,  # Cleaning tablets
+                estimated_hours=0.25,
+                requires_professional=False,
+                season_dependent=False,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_winterize_outdoor_taps",
+                title="Winterize outdoor faucets",
+                category=MaintenanceCategory.SEASONAL,
+                description="Install insulated covers on outdoor faucets and drain hoses",
+                priority=Priority.HIGH,
+                frequency_days=365,
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=30)).isoformat(),  # Before winter
+                estimated_cost=25.0,  # Faucet covers
+                estimated_hours=1.0,
+                requires_professional=False,
+                season_dependent=True,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_winterize_sprinklers",
+                title="Winterize sprinkler system",
+                category=MaintenanceCategory.SEASONAL,
+                description="Blow out sprinkler lines and shut off water supply",
+                priority=Priority.HIGH,
+                frequency_days=365,
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=30)).isoformat(),
+                estimated_cost=75.0,  # Professional blowout
+                estimated_hours=1.0,
+                requires_professional=True,
+                season_dependent=True,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_winterize_hvac",
+                title="Winterize HVAC system",
+                category=MaintenanceCategory.SEASONAL,
+                description="Cover outdoor AC unit and switch to heating mode",
+                priority=Priority.MEDIUM,
+                frequency_days=365,
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=30)).isoformat(),
+                estimated_cost=15.0,  # AC cover
+                estimated_hours=0.5,
+                requires_professional=False,
+                season_dependent=True,
+                weather_dependent=False
+            ),
+            MaintenanceTask(
+                id="task_spring_dewinterize",
+                title="Spring de-winterization",
+                category=MaintenanceCategory.SEASONAL,
+                description="Remove faucet covers, turn on outdoor water, uncover AC unit",
+                priority=Priority.MEDIUM,
+                frequency_days=365,
+                last_completed=None,
+                next_due=(datetime.now() + timedelta(days=180)).isoformat(),  # Spring
+                estimated_cost=0.0,
+                estimated_hours=1.0,
+                requires_professional=False,
+                season_dependent=True,
+                weather_dependent=False
+            ),
         ]
         
         self.tasks.extend(baseline)

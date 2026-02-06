@@ -185,17 +185,36 @@ home = HomeProfile(
 
 ## Maintenance Categories
 
-Tracks 9 categories:
+Tracks 9 categories with comprehensive tasks:
 
-1. **HVAC** - Filters, service, duct cleaning
-2. **Plumbing** - Water heater, pipes, fixtures
+1. **HVAC** - Filters (every 3 months), annual service, duct cleaning
+2. **Plumbing** - Water heater flush, pipes, fixtures
 3. **Electrical** - Panels, outlets, lighting
-4. **Appliances** - Refrigerator, washer, dryer
+4. **Appliances** - Washing machine cleaning (every 3 weeks), refrigerator, dryer
 5. **Exterior** - Roof, gutters, siding, paint
 6. **Interior** - Flooring, walls, doors, windows
 7. **Landscaping** - Lawn, trees, irrigation
-8. **Safety** - Smoke detectors, CO detectors, fire extinguishers
-9. **Seasonal** - Winterization, spring prep
+8. **Safety** - Smoke detectors (every 6 months), CO detectors, fire extinguishers
+9. **Seasonal** - Winterization (outdoor faucet covers, sprinkler blowout, HVAC prep), spring de-winterization
+
+### Seasonal Tasks Included
+
+**Winterization (Fall):**
+- Install insulated covers on outdoor faucets
+- Blow out sprinkler system lines
+- Cover outdoor AC unit
+- Drain garden hoses
+
+**Spring Preparation:**
+- Remove faucet covers
+- Turn on outdoor water supply
+- Uncover AC unit
+- Test sprinkler system
+
+**Regular Appliance Maintenance:**
+- Washing machine cleaning every 3 weeks (prevents mold, odors)
+- Dryer vent cleaning every 6 months
+- Refrigerator coil cleaning every 6 months
 
 ## Example Output
 
