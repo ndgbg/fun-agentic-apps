@@ -5,9 +5,9 @@
 [![Playwright](https://img.shields.io/badge/Playwright-Browser%20Automation-green.svg)](https://playwright.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Autonomous agent that runs your applications, interacts intelligently, and captures professional screenshots for documentation.**
+**Autonomous agent that runs your applications, interacts intelligently, and captures professional screenshots and videos for documentation.**
 
-Never manually screenshot demos again. Let AI explore your apps and capture the perfect moments.
+Never manually screenshot or record demos again. Let AI explore your apps and capture the perfect moments.
 
 ## What It Does
 
@@ -15,7 +15,8 @@ Never manually screenshot demos again. Let AI explore your apps and capture the 
 - **Intelligent scenario planning** - LLM generates realistic demo scenarios
 - **Smart interaction** - AI analyzes pages and decides what to click/fill
 - **Perfect timing** - Captures screenshots at key moments
-- **Organized output** - Generates markdown report with all screenshots
+- **Video recording** - Records entire demo sessions automatically
+- **Organized output** - Generates markdown report with all media
 - **Multi-app support** - Demos multiple apps in sequence
 
 ## Why It's Agentic
@@ -105,14 +106,32 @@ Captures at key moments:
 - During state transitions
 - At visual highlights
 
-### 4. Organized Output
+### 4. Video Recording
+
+Automatically records entire demo sessions:
+- Full browser interaction captured
+- High-quality video output
+- Saved as WebM format
+- One video per demo session
+
+### 5. Organized Output
 
 Generates professional report:
 
 ```markdown
-## Home Maintenance Agent
+## 🎥 Demo Videos
 
-### Initial Setup
+### Home Maintenance Agent
+
+[Download Video](videos/video-1.webm)
+
+---
+
+## 📸 Screenshots
+
+### Home Maintenance Agent
+
+#### Initial Setup
 Shows home profile configuration with 19 tracked tasks.
 
 ![Initial Setup](screenshots/home_maintenance_initial_20260206_120000.png)
@@ -274,6 +293,11 @@ screenshots/
 ├── momops_ai_chat_20260206_120130.png
 ├── montessori_activities_20260206_120200.png
 └── montessori_engagement_20260206_120230.png
+
+videos/
+├── video-1.webm
+├── video-2.webm
+└── video-3.webm
 ```
 
 ## Use Cases
@@ -282,21 +306,25 @@ screenshots/
 - Automatically update README screenshots
 - Generate user guides
 - Create tutorial images
+- Record walkthrough videos
 
 ### Marketing
 - Product demo screenshots
 - Feature highlights
 - Before/after comparisons
+- Demo videos for social media
 
 ### Testing
 - Visual regression testing
 - UI consistency checks
 - Cross-browser screenshots
+- Interaction flow videos
 
 ### Presentations
 - Demo slides
 - Investor decks
 - Conference talks
+- Tutorial videos
 
 ## Technical Highlights
 
@@ -304,6 +332,7 @@ screenshots/
 - Playwright for reliable automation
 - Headless or headed mode
 - Multiple browser support (Chromium, Firefox, WebKit)
+- Built-in video recording
 
 **AI-Powered:**
 - LLM scenario generation
@@ -315,6 +344,7 @@ screenshots/
 - Error handling
 - Retry logic
 - Screenshot optimization
+- Video recording
 - Organized output
 
 ## Comparison
@@ -324,6 +354,7 @@ screenshots/
 | Planning | Manual | Hardcoded | AI-generated |
 | Interaction | Manual | Scripted | Intelligent |
 | Timing | Manual | Fixed waits | Adaptive |
+| Video Recording | Separate tool | Complex setup | Built-in |
 | Organization | Manual | None | Automatic |
 | Maintenance | High | Medium | Low |
 | Flexibility | Low | Medium | High |
@@ -401,12 +432,12 @@ temperature = 0.4  # For scenario generation
 ## Future Enhancements
 
 The architecture supports:
-- Video recording (not just screenshots)
 - Multi-browser testing
 - Mobile device emulation
 - Accessibility testing
 - Performance metrics
 - A/B comparison screenshots
+- Custom video editing (trim, annotate)
 
 ## License
 

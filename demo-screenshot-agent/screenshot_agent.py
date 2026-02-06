@@ -28,6 +28,7 @@ class BrowserAgent:
         self.browser = None
         self.context = None
         self.page = None
+        self.is_recording = False
     
     async def initialize(self):
         """Initialize Playwright browser."""
@@ -38,11 +39,12 @@ class BrowserAgent:
             self.browser = await self.playwright.chromium.launch(headless=False)
             self.context = await self.browser.new_context(
                 viewport={'width': 1920, 'height': 1080},
-                device_scale_factor=2  # Retina display
+                device_scale_factor=2,  # Retina display
+                record_video_dir='./videos/'  # Enable video recording
             )
             self.page = await self.context.new_page()
             
-            print("✅ Browser initialized")
+            print("✅ Browser initialized with video recording")
             return True
             
         except ImportError:
@@ -72,8 +74,16 @@ class BrowserAgent:
         """Get page text content."""
         return await self.page.inner_text('body')
     
+    async def get_video_path(self) -> Optional[str]:
+        """Get path to recorded video."""
+        if self.page and self.page.video:
+            return await self.page.video.path()
+        return None
+    
     async def close(self):
-        """Close browser."""
+        """Close browser and save video."""
+        if self.context:
+            await self.context.close()  # This saves the video
         if self.browser:
             await self.browser.close()
         if self.playwright:
@@ -178,10 +188,13 @@ class DemoScreenshotAgent:
         self.scenario_planner = ScenarioPlanner(self.api_key)
         self.interaction_agent = InteractionAgent(self.api_key)
         self.screenshots = []
+        self.videos = []
         
-        # Create screenshots directory
+        # Create output directories
         self.screenshot_dir = Path("screenshots")
         self.screenshot_dir.mkdir(exist_ok=True)
+        self.video_dir = Path("videos")
+        self.video_dir.mkdir(exist_ok=True)
     
     async def demo_app(self, app_info: Dict):
         """Run complete demo for an app."""
@@ -208,10 +221,19 @@ class DemoScreenshotAgent:
                 
                 await self._execute_scenario(app_info, scenario)
             
+            # Save video
+            video_path = await self.browser_agent.get_video_path()
+            if video_path:
+                self.videos.append({
+                    'app_name': app_info['name'],
+                    'path': video_path
+                })
+                print(f"\n🎥 Video saved: {video_path}")
+            
         finally:
             await self.browser_agent.close()
         
-        print(f"\n✅ Demo complete! Captured {len(self.screenshots)} screenshots")
+        print(f"\n✅ Demo complete! Captured {len(self.screenshots)} screenshots and {len(self.videos)} videos")
     
     async def _execute_scenario(self, app_info: Dict, scenario: Dict):
         """Execute a single scenario."""
@@ -317,14 +339,26 @@ class DemoScreenshotAgent:
         return str(self.screenshot_dir / filename)
     
     def generate_report(self):
-        """Generate markdown report of screenshots."""
+        """Generate markdown report of screenshots and videos."""
         
         report_path = self.screenshot_dir / "DEMO_REPORT.md"
         
         with open(report_path, 'w') as f:
-            f.write("# Demo Screenshots Report\n\n")
+            f.write("# Demo Report\n\n")
             f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-            f.write(f"Total Screenshots: {len(self.screenshots)}\n\n")
+            f.write(f"Total Screenshots: {len(self.screenshots)}\n")
+            f.write(f"Total Videos: {len(self.videos)}\n\n")
+            
+            # Videos section
+            if self.videos:
+                f.write("## 🎥 Demo Videos\n\n")
+                for video in self.videos:
+                    f.write(f"### {video['app_name']}\n\n")
+                    f.write(f"[Download Video]({video['path']})\n\n")
+                    f.write("---\n\n")
+            
+            # Screenshots section
+            f.write("## 📸 Screenshots\n\n")
             
             # Group by app
             apps = {}
@@ -334,10 +368,10 @@ class DemoScreenshotAgent:
                 apps[screenshot.app_name].append(screenshot)
             
             for app_name, screenshots in apps.items():
-                f.write(f"## {app_name}\n\n")
+                f.write(f"### {app_name}\n\n")
                 
                 for screenshot in screenshots:
-                    f.write(f"### {screenshot.scenario}\n\n")
+                    f.write(f"#### {screenshot.scenario}\n\n")
                     f.write(f"{screenshot.description}\n\n")
                     f.write(f"![{screenshot.scenario}]({screenshot.filepath})\n\n")
                     f.write(f"*Captured: {screenshot.timestamp}*\n\n")
