@@ -104,20 +104,31 @@ A local AI that runs your life ops. Self-hosted, proactive, and memory-enabled.
 - Makes decisions about priority ranking
 
 ### [Home Maintenance Agent](home-maintenance-agent/)
-Sophisticated multi-agent system for proactive home maintenance management.
+Sophisticated multi-agent system for complete home management - maintenance, cleaning, and organization.
 
 **What it does:**
 - Predicts system failures before they occur (ML-powered)
-- Optimizes maintenance schedule (budget, time, weather, season)
+- Manages 19 tasks: maintenance, cleaning, organization
+- Tracks everything from HVAC to trash day to closet organization
+- Optimizes schedule (budget, time, weather, season)
 - Generates contextual alerts (overdue, predictive, weather-based)
 - Integrates with Google Calendar (auto-scheduling)
 - Optimizes costs (DIY vs professional, bulk purchasing)
-- Generates detailed maintenance guides
+- Generates detailed guides for every task
+
+**Comprehensive coverage:**
+- Home maintenance (HVAC, plumbing, electrical, safety)
+- Appliances (washing machine every 3 weeks, etc.)
+- Seasonal tasks (winterization, outdoor faucet covers, spring prep)
+- Weekly cleaning (trash, vacuuming)
+- Monthly cleaning (refrigerator)
+- Quarterly deep cleaning (kitchen, bathrooms, pantry)
+- Seasonal organization (closets, garage, windows)
 
 **Why it's agentic:**
 - 6 specialized agents working in coordination
 - Predictive analytics using LLM reasoning
-- Multi-constraint optimization
+- Multi-constraint optimization (budget, time, weather, dependencies)
 - Autonomous decision-making and scheduling
 - Real-time adaptation to conditions
 - Knowledge synthesis from maintenance data
