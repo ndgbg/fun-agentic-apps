@@ -6,11 +6,7 @@ New parents struggle to track feeding, sleep, and diaper patterns while managing
 
 ## 🎥 Demo
 
-> **Note:** To view the demo video, download [demo.webm](demo.webm) or watch it by clicking the file in the repository.
-
-**Quick Preview:**
-
-![Dashboard](screenshot-dashboard.png)
+https://github.com/user-attachments/assets/26f0ed34-56dd-463e-aa6d-7a95d8255844
 
 ## 🤖 Autonomous AI Features
 
