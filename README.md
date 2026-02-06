@@ -125,10 +125,41 @@ Sophisticated multi-agent system for complete home management - maintenance, cle
 - Knowledge synthesis from maintenance data
 
 ### [MomOps Agent](momops-agent/)
-Parenting operations assistant for new parents.
+Truly agentic baby care assistant for new parents.
+
+**What it does:**
+- Continuously monitors feeding, sleep, and diaper patterns
+- Proactively suggests feeding times and sleep schedules
+- Learns from your responses and adapts to baby's unique patterns
+- Provides intelligent chat with contextual awareness
+- Tracks caregiver schedules and milestones
+- Visual analytics and pattern detection
+
+**Why it's agentic:**
+- Autonomous background monitoring
+- Proactive recommendations (suggests before you ask)
+- Continuous learning from interactions
+- Adapts to baby's unique patterns
+- LLM-powered contextual advice
+- Progressive enhancement (works offline, better with AI)
 
 ### [Montessori AI Agent](montessori-ai-agent/)
-Educational activity planner for children.
+Autonomous AI assistant for Montessori-based early childhood development.
+
+**What it does:**
+- Generates personalized Montessori activities for your child
+- Adapts recommendations based on engagement patterns
+- Provides age-appropriate developmental activities
+- Learns from child's interests and progress
+- Privacy-first (all data stored locally)
+
+**Why it's agentic:**
+- Observes child's engagement patterns
+- Reasons about developmental needs using Montessori principles
+- Autonomously generates personalized activities
+- Continuous learning loop (observe → reason → act → learn)
+- Real LLM integration (OpenAI, Anthropic, Ollama)
+- Adapts difficulty based on child's progress
 
 ## 🤝 Contributing
 
