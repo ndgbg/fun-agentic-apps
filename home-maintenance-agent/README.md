@@ -9,6 +9,10 @@
 
 Never miss maintenance, cleaning, or organization tasks. Predict failures before they happen. Optimize costs automatically.
 
+## 🎥 Demo
+
+![Demo](screenshot-demo.png)
+
 ## What It Does
 
 **Tracks 19 comprehensive tasks:**
