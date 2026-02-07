@@ -9,7 +9,11 @@ Autonomous scheduling agent that handles the entire meeting coordination process
 
 ## 🎥 Demo
 
-![Demo](screenshot-demo.png)
+https://github.com/user-attachments/assets/325be941-f94c-4367-99fe-237600c595a8
+
+*Animated terminal demo showing autonomous negotiation across 3 rounds with real-time adaptation*
+
+![Screenshot](screenshot-demo.png)
 
 ## What It Does
 
