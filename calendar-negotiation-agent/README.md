@@ -7,6 +7,10 @@
 
 Autonomous scheduling agent that handles the entire meeting coordination process.
 
+## 🎥 Demo
+
+![Demo](screenshot-demo.png)
+
 ## What It Does
 
 Coordinates meetings across multiple participants by:
