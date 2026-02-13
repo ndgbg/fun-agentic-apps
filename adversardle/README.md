@@ -4,6 +4,8 @@ A Wordle-like word game where the AI actively fights back. Unlike regular Wordle
 
 **You win by "cornering" the AI into exactly one possible word.**
 
+![Adversardle Screenshot](screenshot.png)
+
 ## How It Works
 
 1. The AI starts with all 2,309 candidate words
