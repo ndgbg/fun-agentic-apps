@@ -179,6 +179,23 @@ Autonomous agent that runs your applications and captures professional screensho
 - Self-documenting (generates reports automatically)
 - Intelligent timing (knows when to capture)
 
+### [Adversardle](adversardle/)
+Adversarial AI Wordle — a word game where the AI actively fights back.
+
+**What it does:**
+- Plays a Wordle-like game where there's no pre-selected word
+- AI watches your guesses and picks the hardest possible color pattern
+- Strategically shifts the target to maximize difficulty
+- Player wins by "cornering" the AI into exactly one possible word
+- Daily challenges with shareable emoji results
+
+**Why it's agentic:**
+- Autonomous adversarial reasoning (243 possible responses per turn)
+- Strategic decision-making to maximize remaining candidates
+- Provably fair — every response consistent with real words
+- Real-time partitioning and optimization of word space
+- Adaptive difficulty based on player's guesses
+
 ## 🤝 Contributing
 
 Want to add your own agentic app? We welcome contributions!
