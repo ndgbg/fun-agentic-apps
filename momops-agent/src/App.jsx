@@ -43,24 +43,24 @@ function App() {
   const [showWelcome, setShowWelcome] = useState(false)
   const [autonomousAgent, setAutonomousAgent] = useState(null)
 
-  // Initialize autonomous agent and LLM - temporarily disabled for debugging
+  // Initialize autonomous agent and LLM
   useEffect(() => {
-    console.log('🤖 App starting (agent temporarily disabled)...')
-    
-    // Temporarily disable autonomous agent for debugging
-    // const agent = new AutonomousAgent()
-    // setAutonomousAgent(agent)
-    
+    console.log('🤖 App starting with autonomous agent...')
+
+    // Initialize autonomous agent with observe→reason→act loop
+    const agent = new AutonomousAgent()
+    setAutonomousAgent(agent)
+
     // Initialize LLM in background (starts with demo, upgrades on demand)
     console.log('🧠 Starting lightweight LLM initialization...')
     llmService.initialize().catch(error => {
       console.error('🧠 LLM initialization failed:', error)
     })
-    
+
     return () => {
-      // if (agent) {
-      //   agent.stopAutonomousMonitoring()
-      // }
+      if (agent) {
+        agent.stopAutonomousMonitoring()
+      }
     }
   }, [])
 

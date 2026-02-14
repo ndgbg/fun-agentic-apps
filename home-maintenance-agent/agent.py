@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Home Maintenance Agent - Multi-Agent System for Proactive Home Care
-Sophisticated autonomous system that predicts, schedules, and manages all home maintenance.
+Home Maintenance Agent - Agentic Multi-Tool System for Proactive Home Care
+Uses an Anthropic tool_use loop where a coordinator LLM decides which sub-agent
+capability to invoke, observes results, and adapts its plan dynamically.
 """
 
 import os
@@ -84,14 +85,14 @@ class HomeProfile:
 
 class PredictiveMaintenanceAgent:
     """Uses ML patterns to predict maintenance needs before failures."""
-    
+
     def __init__(self, api_key: str):
         self.client = anthropic.Anthropic(api_key=api_key)
-    
-    async def predict_failures(self, home_profile: HomeProfile, 
+
+    async def predict_failures(self, home_profile: HomeProfile,
                               maintenance_history: List[MaintenanceTask]) -> List[Dict]:
         """Predict potential failures based on home profile and history."""
-        
+
         prompt = f"""You are a predictive maintenance expert. Analyze this home and predict potential failures.
 
 Home Profile:
@@ -125,43 +126,43 @@ Return JSON array:
 ]"""
 
         message = self.client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=2000,
             temperature=0.3,
             messages=[{"role": "user", "content": prompt}]
         )
-        
+
         response_text = message.content[0].text
-        
+
         import re
         json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
         if json_match:
             return json.loads(json_match.group())
         return []
-    
+
     def _format_history(self, tasks: List[MaintenanceTask]) -> str:
         if not tasks:
             return "No recent maintenance"
-        return "\n".join([f"- {t.title} ({t.category.value}): {t.last_completed or 'Never'}" 
+        return "\n".join([f"- {t.title} ({t.category.value}): {t.last_completed or 'Never'}"
                          for t in tasks])
 
 class SchedulingAgent:
     """Optimizes maintenance scheduling based on multiple constraints."""
-    
+
     def __init__(self, api_key: str):
         self.client = anthropic.Anthropic(api_key=api_key)
-    
-    async def optimize_schedule(self, tasks: List[MaintenanceTask], 
+
+    async def optimize_schedule(self, tasks: List[MaintenanceTask],
                                 constraints: Dict) -> List[Dict]:
         """Create optimal maintenance schedule."""
-        
+
         tasks_text = "\n".join([
             f"- {t.title} (Due: {t.next_due}, Priority: {t.priority.value}, "
             f"Cost: ${t.estimated_cost}, Hours: {t.estimated_hours}h, "
             f"Professional: {t.requires_professional})"
             for t in tasks[:20]
         ])
-        
+
         prompt = f"""You are a scheduling optimization expert. Create an optimal maintenance schedule.
 
 Tasks to Schedule:
@@ -193,14 +194,14 @@ Return JSON array of scheduled tasks:
 ]"""
 
         message = self.client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=2500,
             temperature=0.4,
             messages=[{"role": "user", "content": prompt}]
         )
-        
+
         response_text = message.content[0].text
-        
+
         import re
         json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
         if json_match:
@@ -209,25 +210,25 @@ Return JSON array of scheduled tasks:
 
 class AlertAgent:
     """Monitors conditions and generates intelligent alerts."""
-    
+
     def __init__(self, api_key: str):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.alerts = []
-    
-    async def generate_alerts(self, tasks: List[MaintenanceTask], 
+
+    async def generate_alerts(self, tasks: List[MaintenanceTask],
                              predictions: List[Dict],
                              weather: Dict) -> List[Alert]:
         """Generate contextual alerts based on multiple factors."""
-        
+
         alerts = []
         now = datetime.now()
-        
+
         # Overdue tasks
         for task in tasks:
             if task.status != TaskStatus.COMPLETED:
                 due_date = datetime.fromisoformat(task.next_due)
                 days_until = (due_date - now).days
-                
+
                 if days_until < 0:
                     alerts.append(Alert(
                         id=f"alert_{len(alerts)}",
@@ -252,7 +253,7 @@ class AlertAgent:
                         message=f"Reminder: {task.title} due in {days_until} days",
                         created_at=now.isoformat()
                     ))
-        
+
         # Predictive alerts
         for pred in predictions:
             if pred.get('failure_probability', 0) > 60:
@@ -265,7 +266,7 @@ class AlertAgent:
                            f"Take action: {pred['preventive_action']}",
                     created_at=now.isoformat()
                 ))
-        
+
         # Weather-based alerts
         if weather.get('severe_weather'):
             weather_tasks = [t for t in tasks if t.weather_dependent]
@@ -278,17 +279,17 @@ class AlertAgent:
                            f"Postpone outdoor tasks: {', '.join([t.title for t in weather_tasks[:3]])}",
                     created_at=now.isoformat()
                 ))
-        
+
         self.alerts.extend(alerts)
         return alerts
 
 class CalendarIntegrationAgent:
     """Integrates with Google Calendar for scheduling and reminders."""
-    
+
     def __init__(self):
         self.calendar_service = None
         self._initialize()
-    
+
     def _initialize(self):
         """Initialize Google Calendar API."""
         try:
@@ -296,13 +297,13 @@ class CalendarIntegrationAgent:
             from google_auth_oauthlib.flow import InstalledAppFlow
             from google.auth.transport.requests import Request
             from googleapiclient.discovery import build
-            
+
             SCOPES = ['https://www.googleapis.com/auth/calendar']
-            
+
             creds = None
             if os.path.exists('calendar_token.json'):
                 creds = Credentials.from_authorized_user_file('calendar_token.json', SCOPES)
-            
+
             if not creds or not creds.valid:
                 if creds and creds.expired and creds.refresh_token:
                     creds.refresh(Request())
@@ -310,25 +311,25 @@ class CalendarIntegrationAgent:
                     if os.path.exists('credentials.json'):
                         flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
                         creds = flow.run_local_server(port=0)
-                
+
                 with open('calendar_token.json', 'w') as token:
                     token.write(creds.to_json())
-            
+
             self.calendar_service = build('calendar', 'v3', credentials=creds)
-            
+
         except Exception as e:
-            print(f"⚠️  Calendar integration not configured: {e}")
-    
+            print(f"Calendar integration not configured: {e}")
+
     def add_maintenance_event(self, task: MaintenanceTask, scheduled_date: str) -> Optional[str]:
         """Add maintenance task to Google Calendar."""
-        
+
         if not self.calendar_service:
             print(f"[MOCK] Would add to calendar: {task.title} on {scheduled_date}")
             return f"mock_event_{task.id}"
-        
+
         try:
             event = {
-                'summary': f"🏠 {task.title}",
+                'summary': f"Home Maintenance: {task.title}",
                 'description': f"{task.description}\n\n"
                               f"Category: {task.category.value}\n"
                               f"Estimated time: {task.estimated_hours}h\n"
@@ -350,30 +351,30 @@ class CalendarIntegrationAgent:
                     ],
                 },
             }
-            
+
             event = self.calendar_service.events().insert(
                 calendarId='primary',
                 body=event
             ).execute()
-            
+
             return event.get('id')
-            
+
         except Exception as e:
             print(f"Error adding to calendar: {e}")
             return None
-    
+
     def add_reminder(self, alert: Alert, days_before: int = 1) -> Optional[str]:
         """Add reminder for alert."""
-        
+
         if not self.calendar_service:
             print(f"[MOCK] Would add reminder: {alert.message}")
             return f"mock_reminder_{alert.id}"
-        
+
         try:
             reminder_date = (datetime.now() + timedelta(days=days_before)).isoformat()
-            
+
             event = {
-                'summary': f"⚠️ Maintenance Alert",
+                'summary': f"Maintenance Alert",
                 'description': alert.message,
                 'start': {
                     'dateTime': reminder_date,
@@ -391,28 +392,28 @@ class CalendarIntegrationAgent:
                     ],
                 },
             }
-            
+
             event = self.calendar_service.events().insert(
                 calendarId='primary',
                 body=event
             ).execute()
-            
+
             return event.get('id')
-            
+
         except Exception as e:
             print(f"Error adding reminder: {e}")
             return None
 
 class KnowledgeBaseAgent:
     """Maintains knowledge base of maintenance procedures and best practices."""
-    
+
     def __init__(self, api_key: str):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.knowledge_base = {}
-    
+
     async def get_maintenance_guide(self, task: MaintenanceTask) -> Dict:
         """Generate detailed maintenance guide for a task."""
-        
+
         prompt = f"""You are a home maintenance expert. Provide a detailed guide for this task.
 
 Task: {task.title}
@@ -442,14 +443,14 @@ Return JSON:
 }}"""
 
         message = self.client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=2000,
             temperature=0.3,
             messages=[{"role": "user", "content": prompt}]
         )
-        
+
         response_text = message.content[0].text
-        
+
         import re
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
         if json_match:
@@ -460,19 +461,19 @@ Return JSON:
 
 class CostOptimizationAgent:
     """Optimizes costs by analyzing DIY vs professional, bulk purchasing, etc."""
-    
+
     def __init__(self, api_key: str):
         self.client = anthropic.Anthropic(api_key=api_key)
-    
-    async def optimize_costs(self, tasks: List[MaintenanceTask], 
+
+    async def optimize_costs(self, tasks: List[MaintenanceTask],
                             budget: float) -> Dict:
         """Analyze and optimize maintenance costs."""
-        
+
         tasks_text = "\n".join([
             f"- {t.title}: ${t.estimated_cost} ({'Pro' if t.requires_professional else 'DIY'})"
             for t in tasks[:15]
         ])
-        
+
         prompt = f"""You are a cost optimization expert. Analyze these maintenance tasks and optimize costs.
 
 Tasks:
@@ -507,14 +508,14 @@ Return JSON:
 }}"""
 
         message = self.client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=2000,
             temperature=0.4,
             messages=[{"role": "user", "content": prompt}]
         )
-        
+
         response_text = message.content[0].text
-        
+
         import re
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
         if json_match:
@@ -522,33 +523,34 @@ Return JSON:
         return {}
 
 class HomeMaintenanceOrchestrator:
-    """Main orchestrator coordinating all agents."""
-    
+    """Agentic orchestrator that uses a tool_use loop to coordinate sub-agents."""
+
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
-        
-        # Initialize agents
+        self.client = anthropic.Anthropic(api_key=self.api_key)
+
+        # Initialize sub-agents (they serve as tool implementations)
         self.predictive_agent = PredictiveMaintenanceAgent(self.api_key)
         self.scheduling_agent = SchedulingAgent(self.api_key)
         self.alert_agent = AlertAgent(self.api_key)
         self.calendar_agent = CalendarIntegrationAgent()
         self.knowledge_agent = KnowledgeBaseAgent(self.api_key)
         self.cost_agent = CostOptimizationAgent(self.api_key)
-        
+
         # State
         self.home_profile = None
         self.tasks = []
         self.alerts = []
         self.schedule = []
-    
+
     def initialize_home(self, profile: HomeProfile):
         """Initialize home profile."""
         self.home_profile = profile
         self._generate_baseline_tasks()
-    
+
     def _generate_baseline_tasks(self):
         """Generate baseline maintenance tasks based on home profile."""
-        
+
         baseline = [
             MaintenanceTask(
                 id="task_hvac_filter",
@@ -837,106 +839,411 @@ class HomeMaintenanceOrchestrator:
                 weather_dependent=False
             ),
         ]
-        
+
         self.tasks.extend(baseline)
-    
+
+    def _get_tool_definitions(self) -> List[Dict]:
+        """Return Anthropic tool schemas for all sub-agent capabilities."""
+        return [
+            {
+                "name": "predict_failures",
+                "description": (
+                    "Run predictive maintenance analysis on the home to identify systems "
+                    "likely to fail in the next 6 months. Returns a list of predictions with "
+                    "failure probabilities, estimated costs, and recommended preventive actions. "
+                    "Use this first to understand the home's risk profile."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            },
+            {
+                "name": "generate_alerts",
+                "description": (
+                    "Generate alerts based on current tasks, predictions, and weather conditions. "
+                    "Identifies overdue tasks, upcoming critical deadlines, high-risk predictions, "
+                    "and weather-related concerns. Optionally accepts predictions from a prior "
+                    "predict_failures call and weather data."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "predictions": {
+                            "type": "array",
+                            "description": "List of failure predictions from predict_failures. Pass the predictions you received earlier.",
+                            "items": {"type": "object"}
+                        },
+                        "weather": {
+                            "type": "object",
+                            "description": "Weather data with 'condition' (string) and 'severe_weather' (boolean) fields.",
+                            "properties": {
+                                "condition": {"type": "string"},
+                                "severe_weather": {"type": "boolean"}
+                            }
+                        }
+                    },
+                    "required": []
+                }
+            },
+            {
+                "name": "optimize_schedule",
+                "description": (
+                    "Create an optimized maintenance schedule considering budget, time, season, "
+                    "and weather constraints. Groups related tasks and prioritizes critical items. "
+                    "Best used after predict_failures and generate_alerts so the schedule reflects "
+                    "the latest risk assessment."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "monthly_budget": {
+                            "type": "number",
+                            "description": "Monthly maintenance budget in dollars. Default 500."
+                        },
+                        "hours_per_week": {
+                            "type": "number",
+                            "description": "Hours available per week for maintenance. Default 4."
+                        },
+                        "current_season": {
+                            "type": "string",
+                            "description": "Current season: spring, summer, fall, or winter.",
+                            "enum": ["spring", "summer", "fall", "winter"]
+                        },
+                        "weather_forecast": {
+                            "type": "string",
+                            "description": "General weather forecast: normal, rain, snow, extreme_heat, etc."
+                        }
+                    },
+                    "required": []
+                }
+            },
+            {
+                "name": "add_to_calendar",
+                "description": (
+                    "Add a specific maintenance task to the calendar on a given date. "
+                    "Use this after optimize_schedule to commit scheduled tasks to the calendar."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {
+                            "type": "string",
+                            "description": "The ID of the maintenance task to schedule."
+                        },
+                        "scheduled_date": {
+                            "type": "string",
+                            "description": "The date to schedule the task (YYYY-MM-DD format)."
+                        }
+                    },
+                    "required": ["task_id", "scheduled_date"]
+                }
+            },
+            {
+                "name": "get_maintenance_guide",
+                "description": (
+                    "Get a detailed step-by-step maintenance guide for a specific task, "
+                    "including tools needed, materials, safety precautions, cost breakdown, "
+                    "and when to call a professional. Useful for DIY tasks."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {
+                            "type": "string",
+                            "description": "The ID of the maintenance task to get a guide for."
+                        }
+                    },
+                    "required": ["task_id"]
+                }
+            },
+            {
+                "name": "optimize_costs",
+                "description": (
+                    "Analyze all maintenance tasks and find cost optimization opportunities: "
+                    "DIY vs professional trade-offs, bulk purchasing, task bundling for contractor "
+                    "discounts, and preventive vs reactive cost comparisons."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "annual_budget": {
+                            "type": "number",
+                            "description": "Annual maintenance budget in dollars. Default 6000."
+                        }
+                    },
+                    "required": []
+                }
+            },
+            {
+                "name": "get_task_list",
+                "description": (
+                    "Retrieve the current list of all maintenance tasks with their status, "
+                    "priority, due dates, and cost estimates. Use this to understand the full "
+                    "scope of maintenance needs before making decisions."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "filter_status": {
+                            "type": "string",
+                            "description": "Filter tasks by status: pending, scheduled, in_progress, completed, overdue. Leave empty for all tasks.",
+                            "enum": ["pending", "scheduled", "in_progress", "completed", "overdue"]
+                        },
+                        "filter_category": {
+                            "type": "string",
+                            "description": "Filter tasks by category: hvac, plumbing, electrical, appliances, exterior, interior, landscaping, safety, seasonal, cleaning, organization. Leave empty for all categories."
+                        },
+                        "filter_priority": {
+                            "type": "string",
+                            "description": "Filter tasks by priority: critical, high, medium, low. Leave empty for all priorities.",
+                            "enum": ["critical", "high", "medium", "low"]
+                        }
+                    },
+                    "required": []
+                }
+            },
+            {
+                "name": "update_task_status",
+                "description": (
+                    "Update the status of a maintenance task. Use this to mark tasks as "
+                    "scheduled, in_progress, completed, or overdue."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {
+                            "type": "string",
+                            "description": "The ID of the task to update."
+                        },
+                        "new_status": {
+                            "type": "string",
+                            "description": "The new status for the task.",
+                            "enum": ["pending", "scheduled", "in_progress", "completed", "overdue"]
+                        }
+                    },
+                    "required": ["task_id", "new_status"]
+                }
+            }
+        ]
+
+    def _execute_tool(self, name: str, tool_input: Dict) -> Any:
+        """Dispatch tool calls to the appropriate sub-agent method."""
+
+        if name == "predict_failures":
+            if not self.home_profile:
+                return {"error": "Home profile not initialized. Call initialize_home first."}
+            result = asyncio.get_event_loop().run_until_complete(
+                self.predictive_agent.predict_failures(self.home_profile, self.tasks)
+            )
+            return {"predictions": result}
+
+        elif name == "generate_alerts":
+            predictions = tool_input.get("predictions", [])
+            weather = tool_input.get("weather", {"condition": "normal", "severe_weather": False})
+            result = asyncio.get_event_loop().run_until_complete(
+                self.alert_agent.generate_alerts(self.tasks, predictions, weather)
+            )
+            self.alerts = result
+            return {"alerts": [asdict(a) for a in result], "total_alerts": len(result)}
+
+        elif name == "optimize_schedule":
+            constraints = {
+                "monthly_budget": tool_input.get("monthly_budget", 500),
+                "hours_per_week": tool_input.get("hours_per_week", 4),
+                "current_season": tool_input.get("current_season", "winter"),
+                "weather_forecast": tool_input.get("weather_forecast", "normal")
+            }
+            result = asyncio.get_event_loop().run_until_complete(
+                self.scheduling_agent.optimize_schedule(self.tasks, constraints)
+            )
+            self.schedule = result
+            return {"schedule": result, "total_scheduled": len(result)}
+
+        elif name == "add_to_calendar":
+            task_id = tool_input.get("task_id")
+            scheduled_date = tool_input.get("scheduled_date")
+            task = next((t for t in self.tasks if t.id == task_id), None)
+            if not task:
+                return {"error": f"Task '{task_id}' not found."}
+            event_id = self.calendar_agent.add_maintenance_event(task, scheduled_date)
+            if event_id:
+                return {"success": True, "event_id": event_id, "task": task.title, "date": scheduled_date}
+            return {"success": False, "error": "Failed to add event to calendar."}
+
+        elif name == "get_maintenance_guide":
+            task_id = tool_input.get("task_id")
+            task = next((t for t in self.tasks if t.id == task_id), None)
+            if not task:
+                return {"error": f"Task '{task_id}' not found."}
+            result = asyncio.get_event_loop().run_until_complete(
+                self.knowledge_agent.get_maintenance_guide(task)
+            )
+            return {"task": task.title, "guide": result}
+
+        elif name == "optimize_costs":
+            budget = tool_input.get("annual_budget", 6000)
+            result = asyncio.get_event_loop().run_until_complete(
+                self.cost_agent.optimize_costs(self.tasks, budget)
+            )
+            return {"cost_analysis": result}
+
+        elif name == "get_task_list":
+            filtered = self.tasks
+            if tool_input.get("filter_status"):
+                status = TaskStatus(tool_input["filter_status"])
+                filtered = [t for t in filtered if t.status == status]
+            if tool_input.get("filter_category"):
+                category = MaintenanceCategory(tool_input["filter_category"])
+                filtered = [t for t in filtered if t.category == category]
+            if tool_input.get("filter_priority"):
+                priority = Priority(tool_input["filter_priority"])
+                filtered = [t for t in filtered if t.priority == priority]
+            return {
+                "tasks": [
+                    {
+                        "id": t.id,
+                        "title": t.title,
+                        "category": t.category.value,
+                        "priority": t.priority.value,
+                        "status": t.status.value,
+                        "next_due": t.next_due,
+                        "estimated_cost": t.estimated_cost,
+                        "estimated_hours": t.estimated_hours,
+                        "requires_professional": t.requires_professional,
+                        "season_dependent": t.season_dependent,
+                        "weather_dependent": t.weather_dependent,
+                        "last_completed": t.last_completed
+                    }
+                    for t in filtered
+                ],
+                "total_tasks": len(filtered)
+            }
+
+        elif name == "update_task_status":
+            task_id = tool_input.get("task_id")
+            new_status = tool_input.get("new_status")
+            task = next((t for t in self.tasks if t.id == task_id), None)
+            if not task:
+                return {"error": f"Task '{task_id}' not found."}
+            task.status = TaskStatus(new_status)
+            if new_status == "completed":
+                task.last_completed = datetime.now().isoformat()
+                task.next_due = (datetime.now() + timedelta(days=task.frequency_days)).isoformat()
+            return {
+                "success": True,
+                "task": task.title,
+                "old_status": task.status.value,
+                "new_status": new_status
+            }
+
+        else:
+            return {"error": f"Unknown tool: {name}"}
+
+    async def run(self, task_description: str, max_iterations: int = 20) -> str:
+        """Run the agentic loop: the coordinator LLM decides which tools to use and adapts."""
+
+        system_prompt = (
+            "You are a home maintenance coordinator. You have tools to predict failures, "
+            "generate alerts, optimize schedules, manage calendars, look up guides, and "
+            "optimize costs. Analyze the home's current state and take appropriate actions.\n\n"
+            "Consider:\n"
+            "- Predictions should inform scheduling: if a system has high failure risk, "
+            "prioritize its maintenance.\n"
+            "- Costs should constrain plans: compare preventive cost vs failure cost to "
+            "decide what's worth doing now.\n"
+            "- Alerts should trigger re-prioritization: overdue or critical items need "
+            "immediate attention.\n"
+            "- Guides are useful for upcoming DIY tasks to help the homeowner prepare.\n\n"
+            "Work through the analysis step by step. Start by understanding the current "
+            "task list, then predict failures, generate alerts, optimize the schedule and "
+            "costs, and add important items to the calendar. Adapt your plan based on what "
+            "you discover at each step. Provide a final summary of actions taken and "
+            "recommendations."
+        )
+
+        messages = [{"role": "user", "content": task_description}]
+        final_response = ""
+
+        for i in range(max_iterations):
+            response = self.client.messages.create(
+                model="claude-sonnet-4-5-20250929",
+                max_tokens=4096,
+                system=system_prompt,
+                tools=self._get_tool_definitions(),
+                messages=messages
+            )
+
+            messages.append({"role": "assistant", "content": response.content})
+
+            if response.stop_reason == "end_turn":
+                # Extract the final text response
+                for block in response.content:
+                    if hasattr(block, "text"):
+                        final_response += block.text
+                break
+
+            if response.stop_reason == "tool_use":
+                tool_results = []
+                for block in response.content:
+                    if block.type == "tool_use":
+                        print(f"  [Tool Call] {block.name}({json.dumps(block.input, default=str)[:100]})")
+                        result = self._execute_tool(block.name, block.input)
+                        print(f"  [Tool Result] {block.name} -> {json.dumps(result, default=str)[:150]}...")
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": json.dumps(result, default=str) if isinstance(result, (dict, list)) else str(result)
+                        })
+                messages.append({"role": "user", "content": tool_results})
+
+        return final_response
+
     async def run_daily_analysis(self):
-        """Run daily analysis and generate alerts."""
-        
-        print("\n🏠 HOME MAINTENANCE AGENT - Daily Analysis")
-        print("="*70)
-        
-        # 1. Predictive analysis
-        print("\n🔮 Running predictive analysis...")
-        predictions = await self.predictive_agent.predict_failures(
-            self.home_profile,
-            self.tasks
+        """Run daily analysis using the agentic loop."""
+
+        print("\nHOME MAINTENANCE AGENT - Daily Analysis")
+        print("=" * 70)
+
+        if not self.home_profile:
+            print("ERROR: Home profile not initialized.")
+            return None
+
+        now = datetime.now()
+        home = self.home_profile
+
+        task_description = (
+            f"Today is {now.strftime('%Y-%m-%d')}. Please perform a comprehensive daily "
+            f"maintenance analysis for this home.\n\n"
+            f"Home Profile:\n"
+            f"- Age: {home.home_age} years\n"
+            f"- Size: {home.square_footage} sq ft\n"
+            f"- Bedrooms: {home.num_bedrooms}, Bathrooms: {home.num_bathrooms}\n"
+            f"- HVAC: {home.hvac_type} ({home.hvac_age} years old)\n"
+            f"- Roof: {home.roof_age} years old\n"
+            f"- Location: {home.location} (Climate: {home.climate_zone})\n"
+            f"- Has basement: {home.has_basement}, attic: {home.has_attic}, garage: {home.has_garage}\n\n"
+            f"The home currently has {len(self.tasks)} maintenance tasks tracked. "
+            f"Please review the task list, predict potential failures, generate any necessary "
+            f"alerts, optimize the schedule and costs, and add critical items to the calendar. "
+            f"Provide a final summary with your key findings and recommendations."
         )
-        
-        print(f"   Found {len(predictions)} potential issues")
-        for pred in predictions[:3]:
-            print(f"   ⚠️  {pred['system']}: {pred['failure_probability']}% risk")
-        
-        # 2. Generate alerts
-        print("\n🚨 Generating alerts...")
-        weather = {"condition": "normal", "severe_weather": False}
-        alerts = await self.alert_agent.generate_alerts(
-            self.tasks,
-            predictions,
-            weather
-        )
-        
-        print(f"   Generated {len(alerts)} alerts")
-        for alert in alerts[:5]:
-            icon = "🔴" if alert.severity == "critical" else "🟡" if alert.severity == "high" else "🟢"
-            print(f"   {icon} {alert.message}")
-        
-        # 3. Optimize schedule
-        print("\n📅 Optimizing schedule...")
-        constraints = {
-            "monthly_budget": 500,
-            "hours_per_week": 4,
-            "current_season": "winter",
-            "weather_forecast": "normal"
-        }
-        
-        schedule = await self.scheduling_agent.optimize_schedule(
-            self.tasks,
-            constraints
-        )
-        
-        print(f"   Scheduled {len(schedule)} tasks")
-        for item in schedule[:3]:
-            print(f"   📌 {item.get('scheduled_date')}: {item.get('reasoning', 'N/A')[:60]}...")
-        
-        # 4. Add to calendar
-        print("\n📆 Adding to calendar...")
-        for item in schedule[:3]:
-            task = next((t for t in self.tasks if t.id == item.get('task_id')), None)
-            if task:
-                event_id = self.calendar_agent.add_maintenance_event(
-                    task,
-                    item.get('scheduled_date')
-                )
-                if event_id:
-                    print(f"   ✓ Added: {task.title}")
-        
-        # 5. Cost optimization
-        print("\n💰 Analyzing costs...")
-        cost_analysis = await self.cost_agent.optimize_costs(
-            self.tasks,
-            6000  # Annual budget
-        )
-        
-        if cost_analysis:
-            print(f"   Original cost: ${cost_analysis.get('total_estimated_cost', 0):.2f}")
-            print(f"   Optimized cost: ${cost_analysis.get('optimized_cost', 0):.2f}")
-            print(f"   Savings: ${cost_analysis.get('savings', 0):.2f}")
-        
-        # 6. Generate guides for upcoming tasks
-        print("\n📚 Generating maintenance guides...")
-        upcoming = [t for t in self.tasks if t.status == TaskStatus.PENDING][:2]
-        for task in upcoming:
-            guide = await self.knowledge_agent.get_maintenance_guide(task)
-            if guide:
-                print(f"   ✓ Guide ready: {task.title}")
-        
-        self.alerts = alerts
-        self.schedule = schedule
-        
-        print("\n" + "="*70)
-        print("✅ Daily analysis complete!")
-        
-        return {
-            "predictions": predictions,
-            "alerts": alerts,
-            "schedule": schedule,
-            "cost_analysis": cost_analysis
-        }
-    
+
+        result = await self.run(task_description)
+
+        print("\n" + "=" * 70)
+        print("ANALYSIS RESULTS")
+        print("=" * 70)
+        print(result)
+        print("\n" + "=" * 70)
+        print("Daily analysis complete!")
+
+        return result
+
     def save_state(self, filepath: str = "home_maintenance_state.json"):
         """Save system state."""
-        
+
         state = {
             "home_profile": asdict(self.home_profile) if self.home_profile else None,
             "tasks": [
@@ -959,23 +1266,23 @@ class HomeMaintenanceOrchestrator:
             "alerts": [asdict(a) for a in self.alerts],
             "schedule": self.schedule
         }
-        
+
         with open(filepath, 'w') as f:
             json.dump(state, f, indent=2)
-        
-        print(f"\n💾 State saved to {filepath}")
+
+        print(f"\nState saved to {filepath}")
 
 async def main():
-    """Demo the home maintenance system."""
-    
-    print("🏠 HOME MAINTENANCE AGENT")
-    print("="*70)
-    print("Multi-Agent System for Proactive Home Care")
-    print("="*70)
-    
+    """Run the agentic home maintenance system."""
+
+    print("HOME MAINTENANCE AGENT")
+    print("=" * 70)
+    print("Agentic Multi-Tool System for Proactive Home Care")
+    print("=" * 70)
+
     # Initialize system
     orchestrator = HomeMaintenanceOrchestrator()
-    
+
     # Set up home profile
     home = HomeProfile(
         home_age=15,
@@ -991,26 +1298,26 @@ async def main():
         location="Seattle, WA",
         climate_zone="Marine"
     )
-    
-    print(f"\n🏡 Home Profile:")
-    print(f"   Age: {home.home_age} years")
-    print(f"   Size: {home.square_footage} sq ft")
-    print(f"   HVAC: {home.hvac_type} ({home.hvac_age} years old)")
-    print(f"   Location: {home.location}")
-    
+
+    print(f"\nHome Profile:")
+    print(f"  Age: {home.home_age} years")
+    print(f"  Size: {home.square_footage} sq ft")
+    print(f"  HVAC: {home.hvac_type} ({home.hvac_age} years old)")
+    print(f"  Location: {home.location}")
+
     orchestrator.initialize_home(home)
-    
-    print(f"\n📋 Initialized with {len(orchestrator.tasks)} baseline tasks")
-    
-    # Run daily analysis
-    results = await orchestrator.run_daily_analysis()
-    
+
+    print(f"\nInitialized with {len(orchestrator.tasks)} baseline tasks")
+
+    # Run daily analysis via the agentic loop
+    await orchestrator.run_daily_analysis()
+
     # Save state
     orchestrator.save_state()
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("System ready! Run daily for continuous monitoring.")
-    print("="*70)
+    print("=" * 70)
 
 if __name__ == "__main__":
     asyncio.run(main())

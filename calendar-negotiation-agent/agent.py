@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Calendar Negotiation Agent
-Autonomous scheduling agent that negotiates meeting times across multiple participants.
+Autonomous scheduling agent that negotiates meeting times across multiple participants
+using Anthropic's tool_use API for truly agentic decision-making.
 """
 
 import os
@@ -11,6 +12,7 @@ from typing import List, Dict, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
 
+
 class NegotiationState(Enum):
     INITIATED = "initiated"
     PROPOSING = "proposing"
@@ -19,11 +21,13 @@ class NegotiationState(Enum):
     RESCHEDULING = "rescheduling"
     FAILED = "failed"
 
+
 class Priority(Enum):
     URGENT = "urgent"
     HIGH = "high"
     NORMAL = "normal"
     LOW = "low"
+
 
 @dataclass
 class Participant:
@@ -31,13 +35,15 @@ class Participant:
     name: str
     timezone: str
     preferences: Dict[str, any]
-    
+
+
 @dataclass
 class TimeSlot:
     start: datetime
     end: datetime
     confidence: float  # 0-1 score of how good this slot is
-    
+
+
 @dataclass
 class MeetingRequest:
     title: str
@@ -47,385 +53,570 @@ class MeetingRequest:
     deadline: Optional[datetime]
     preferences: Dict[str, any]
 
+
+SYSTEM_PROMPT = """\
+You are an expert calendar negotiation agent. Your job is to schedule a meeting \
+that works for all participants by using the tools available to you.
+
+Your workflow:
+1. First, gather participant preferences to understand scheduling constraints.
+2. Check availability for each participant across a reasonable time range.
+3. Based on availability and preferences, propose a set of candidate time slots.
+4. Send a proposal email to all participants with the best options.
+5. Book a meeting room if one is needed.
+6. Create a video conference link if video is required.
+7. Finalize the meeting once all resources are secured.
+
+Guidelines:
+- Always check availability before proposing times.
+- Respect timezone differences -- never propose a slot that falls outside \
+  business hours (8am-6pm) in any participant's local timezone.
+- Prefer times that score highly on participant preferences.
+- If a slot has conflicts, try alternatives before giving up.
+- When finalizing, include all relevant details: time, room, video link, attendees.
+- Be concise in your reasoning. Focus on actions and results.
+"""
+
+
 class CalendarNegotiationAgent:
     """
-    Agentic calendar negotiation system with multi-step reasoning,
-    tool use, and autonomous decision-making.
+    Agentic calendar negotiation system that uses Anthropic's tool_use API
+    for autonomous, multi-step scheduling decisions.
     """
-    
+
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         self.state = NegotiationState.INITIATED
         self.negotiation_history = []
-        self.tools = self._initialize_tools()
-        
-    def _initialize_tools(self) -> Dict:
-        """Initialize available tools for the agent."""
-        return {
-            "check_availability": self._check_availability,
-            "propose_time": self._propose_time,
-            "send_email": self._send_email,
-            "book_room": self._book_meeting_room,
-            "create_zoom": self._create_zoom_link,
-            "analyze_preferences": self._analyze_preferences,
-            "resolve_conflicts": self._resolve_conflicts
-        }
-    
-    async def negotiate_meeting(self, request: MeetingRequest) -> Dict:
-        """
-        Main agentic loop: autonomously negotiate meeting time.
-        
-        Agent capabilities:
-        1. Multi-step reasoning about participant constraints
-        2. Tool use (calendar APIs, email, room booking)
-        3. Adaptive strategy based on responses
-        4. Conflict resolution with fallback options
-        5. Learning from negotiation patterns
-        """
-        
-        if not self.api_key:
-            return self._mock_negotiation(request)
-        
-        try:
-            import anthropic
-            client = anthropic.Anthropic(api_key=self.api_key)
-            
-            # Phase 1: Analyze constraints and preferences
-            analysis = await self._analyze_constraints(client, request)
-            
-            # Phase 2: Generate candidate time slots
-            candidates = await self._generate_candidates(client, request, analysis)
-            
-            # Phase 3: Rank and propose
-            proposal = await self._create_proposal(client, request, candidates)
-            
-            # Phase 4: Handle negotiation rounds
-            result = await self._execute_negotiation(client, request, proposal)
-            
-            return result
-            
-        except Exception as e:
-            return {"error": str(e), "state": "failed"}
-    
-    async def _analyze_constraints(self, client, request: MeetingRequest) -> Dict:
-        """Use LLM to analyze participant constraints and preferences."""
-        
-        participants_info = "\n".join([
-            f"- {p.name} ({p.email}): TZ={p.timezone}, Prefs={json.dumps(p.preferences)}"
-            for p in request.participants
-        ])
-        
-        prompt = f"""Analyze this meeting scheduling request and identify constraints:
 
-Meeting: {request.title}
-Duration: {request.duration_minutes} minutes
-Priority: {request.priority.value}
-Deadline: {request.deadline}
+    # -------------------------------------------------------------------------
+    # Tool schema definitions for the Anthropic API
+    # -------------------------------------------------------------------------
 
-Participants:
-{participants_info}
-
-Analyze:
-1. Timezone challenges and optimal windows
-2. Participant preferences and conflicts
-3. Priority-based scheduling strategy
-4. Potential obstacles
-
-Provide analysis in JSON:
-{{
-    "timezone_strategy": "approach for handling timezones",
-    "optimal_windows": ["time windows that work for most"],
-    "constraints": ["key constraints to respect"],
-    "risks": ["potential scheduling risks"],
-    "recommended_approach": "negotiation strategy"
-}}"""
-
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1500,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        
-        response = message.content[0].text
-        
-        # Extract JSON
-        if "```json" in response:
-            json_start = response.find("```json") + 7
-            json_end = response.find("```", json_start)
-            response = response[json_start:json_end].strip()
-        
-        return json.loads(response)
-    
-    async def _generate_candidates(self, client, request: MeetingRequest, analysis: Dict) -> List[TimeSlot]:
-        """Generate and rank candidate time slots using LLM reasoning."""
-        
-        prompt = f"""Based on this analysis, generate 5 candidate meeting times:
-
-Analysis: {json.dumps(analysis, indent=2)}
-
-Meeting requirements:
-- Duration: {request.duration_minutes} minutes
-- Priority: {request.priority.value}
-- Deadline: {request.deadline}
-
-For each candidate, consider:
-1. Timezone fairness (no one gets 3am meetings)
-2. Participant preferences
-3. Business hours overlap
-4. Buffer time between meetings
-
-Generate candidates in JSON:
-{{
-    "candidates": [
-        {{
-            "start_time": "ISO datetime",
-            "end_time": "ISO datetime",
-            "confidence": 0.0-1.0,
-            "reasoning": "why this slot works",
-            "tradeoffs": "what compromises are made"
-        }}
-    ]
-}}"""
-
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=2000,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        
-        response = message.content[0].text
-        
-        if "```json" in response:
-            json_start = response.find("```json") + 7
-            json_end = response.find("```", json_start)
-            response = response[json_start:json_end].strip()
-        
-        data = json.loads(response)
-        
+    def _get_tool_definitions(self) -> List[Dict]:
+        """Return Anthropic-compatible tool schemas for every capability."""
         return [
-            TimeSlot(
-                start=datetime.fromisoformat(c["start_time"]),
-                end=datetime.fromisoformat(c["end_time"]),
-                confidence=c["confidence"]
-            )
-            for c in data["candidates"]
+            {
+                "name": "check_availability",
+                "description": (
+                    "Check a single participant's calendar availability within a "
+                    "given time range. Returns busy/free windows."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "participant_email": {
+                            "type": "string",
+                            "description": "Email address of the participant to check."
+                        },
+                        "range_start": {
+                            "type": "string",
+                            "description": "ISO-8601 datetime for the start of the range to check."
+                        },
+                        "range_end": {
+                            "type": "string",
+                            "description": "ISO-8601 datetime for the end of the range to check."
+                        }
+                    },
+                    "required": ["participant_email", "range_start", "range_end"]
+                }
+            },
+            {
+                "name": "get_participant_preferences",
+                "description": (
+                    "Retrieve scheduling preferences for a participant, including "
+                    "preferred hours, blocked days, and timezone."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "participant_email": {
+                            "type": "string",
+                            "description": "Email address of the participant."
+                        }
+                    },
+                    "required": ["participant_email"]
+                }
+            },
+            {
+                "name": "propose_times",
+                "description": (
+                    "Record a ranked list of proposed meeting time slots. Each slot "
+                    "includes a start time, end time, and a confidence score."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "proposed_slots": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "start": {
+                                        "type": "string",
+                                        "description": "ISO-8601 start datetime."
+                                    },
+                                    "end": {
+                                        "type": "string",
+                                        "description": "ISO-8601 end datetime."
+                                    },
+                                    "confidence": {
+                                        "type": "number",
+                                        "description": "0-1 confidence score for this slot."
+                                    },
+                                    "reasoning": {
+                                        "type": "string",
+                                        "description": "Why this slot was chosen."
+                                    }
+                                },
+                                "required": ["start", "end", "confidence"]
+                            },
+                            "description": "Ranked list of proposed time slots."
+                        }
+                    },
+                    "required": ["proposed_slots"]
+                }
+            },
+            {
+                "name": "send_proposal_email",
+                "description": (
+                    "Send a meeting proposal email to specified recipients with a "
+                    "subject, body, and list of proposed time options."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "to": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of recipient email addresses."
+                        },
+                        "subject": {
+                            "type": "string",
+                            "description": "Email subject line."
+                        },
+                        "body": {
+                            "type": "string",
+                            "description": "Email body text."
+                        }
+                    },
+                    "required": ["to", "subject", "body"]
+                }
+            },
+            {
+                "name": "book_meeting_room",
+                "description": (
+                    "Book a physical meeting room for the given time slot and "
+                    "number of attendees."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "start": {
+                            "type": "string",
+                            "description": "ISO-8601 start datetime for the room booking."
+                        },
+                        "end": {
+                            "type": "string",
+                            "description": "ISO-8601 end datetime for the room booking."
+                        },
+                        "attendee_count": {
+                            "type": "integer",
+                            "description": "Number of attendees (used to find a suitably sized room)."
+                        },
+                        "room_preferences": {
+                            "type": "string",
+                            "description": "Optional preferences like 'whiteboard', 'video-capable', etc."
+                        }
+                    },
+                    "required": ["start", "end", "attendee_count"]
+                }
+            },
+            {
+                "name": "create_zoom_link",
+                "description": (
+                    "Create a Zoom video conference meeting and return the join URL."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "Meeting topic / title."
+                        },
+                        "duration_minutes": {
+                            "type": "integer",
+                            "description": "Meeting duration in minutes."
+                        },
+                        "start_time": {
+                            "type": "string",
+                            "description": "ISO-8601 scheduled start time."
+                        }
+                    },
+                    "required": ["topic", "duration_minutes"]
+                }
+            },
+            {
+                "name": "finalize_meeting",
+                "description": (
+                    "Finalize and confirm the meeting. Sends calendar invites to all "
+                    "participants with the confirmed time, room, and video link."
+                ),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "Meeting title."
+                        },
+                        "start": {
+                            "type": "string",
+                            "description": "ISO-8601 confirmed start datetime."
+                        },
+                        "end": {
+                            "type": "string",
+                            "description": "ISO-8601 confirmed end datetime."
+                        },
+                        "attendees": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of attendee email addresses."
+                        },
+                        "zoom_link": {
+                            "type": "string",
+                            "description": "Video conference join URL."
+                        },
+                        "room": {
+                            "type": "string",
+                            "description": "Meeting room name or identifier."
+                        },
+                        "notes": {
+                            "type": "string",
+                            "description": "Any additional notes for the invite."
+                        }
+                    },
+                    "required": ["title", "start", "end", "attendees"]
+                }
+            }
         ]
-    
-    async def _create_proposal(self, client, request: MeetingRequest, candidates: List[TimeSlot]) -> Dict:
-        """Create intelligent proposal with reasoning."""
-        
-        # Sort by confidence
-        candidates.sort(key=lambda x: x.confidence, reverse=True)
-        top_candidate = candidates[0]
-        alternatives = candidates[1:3]
-        
-        participants_str = ", ".join([p.name for p in request.participants])
-        
-        prompt = f"""Draft a meeting proposal email for this scheduling request:
 
-Meeting: {request.title}
-Participants: {participants_str}
-Duration: {request.duration_minutes} minutes
+    # -------------------------------------------------------------------------
+    # Tool dispatch
+    # -------------------------------------------------------------------------
 
-Proposed time: {top_candidate.start} - {top_candidate.end}
-Confidence: {top_candidate.confidence}
+    def _execute_tool(self, name: str, tool_input: Dict) -> Dict:
+        """
+        Dispatch a tool call to the appropriate implementation method.
+        Falls back to mock results when real integrations are not configured.
+        """
+        dispatch = {
+            "check_availability": self._tool_check_availability,
+            "get_participant_preferences": self._tool_get_participant_preferences,
+            "propose_times": self._tool_propose_times,
+            "send_proposal_email": self._tool_send_proposal_email,
+            "book_meeting_room": self._tool_book_meeting_room,
+            "create_zoom_link": self._tool_create_zoom_link,
+            "finalize_meeting": self._tool_finalize_meeting,
+        }
 
-Alternative times:
-{chr(10).join([f"- {alt.start} - {alt.end}" for alt in alternatives])}
+        handler = dispatch.get(name)
+        if not handler:
+            return {"error": f"Unknown tool: {name}"}
 
-Write a professional, concise email that:
-1. Proposes the primary time
-2. Offers alternatives
-3. Explains the reasoning briefly
-4. Makes it easy to respond
-5. Shows you've considered everyone's constraints
+        try:
+            return handler(tool_input)
+        except Exception as e:
+            return {"error": str(e)}
 
-Return JSON:
-{{
-    "subject": "email subject",
-    "body": "email body",
-    "tone": "professional|friendly|urgent",
-    "call_to_action": "what you want recipients to do"
-}}"""
+    # -------------------------------------------------------------------------
+    # Individual tool handlers (real integration with mock fallback)
+    # -------------------------------------------------------------------------
 
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1000,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        
-        response = message.content[0].text
-        
-        if "```json" in response:
-            json_start = response.find("```json") + 7
-            json_end = response.find("```", json_start)
-            response = response[json_start:json_end].strip()
-        
-        proposal = json.loads(response)
-        proposal["primary_slot"] = asdict(top_candidate)
-        proposal["alternatives"] = [asdict(alt) for alt in alternatives]
-        
-        return proposal
-    
-    async def _execute_negotiation(self, client, request: MeetingRequest, proposal: Dict) -> Dict:
-        """Execute multi-round negotiation with adaptive strategy."""
-        
+    def _tool_check_availability(self, inp: Dict) -> Dict:
+        """Check calendar availability; falls back to mock if Google is not configured."""
+        email = inp["participant_email"]
+        range_start = inp["range_start"]
+        range_end = inp["range_end"]
+
+        # Look up the participant in the current request for timezone info
+        participant = self._find_participant(email)
+
+        try:
+            result = self._check_availability(participant, (range_start, range_end))
+            if "note" not in result or "not configured" not in result.get("note", ""):
+                return result
+        except Exception:
+            pass
+
+        # Mock fallback: simulate realistic availability
+        return self._mock_check_availability(email, range_start, range_end)
+
+    def _tool_get_participant_preferences(self, inp: Dict) -> Dict:
+        """Return stored preferences for a participant."""
+        email = inp["participant_email"]
+        participant = self._find_participant(email)
+        if participant:
+            return {
+                "email": participant.email,
+                "name": participant.name,
+                "timezone": participant.timezone,
+                "preferences": participant.preferences
+            }
+        return {"error": f"Participant {email} not found in the meeting request."}
+
+    def _tool_propose_times(self, inp: Dict) -> Dict:
+        """Record proposed time slots in the negotiation history."""
+        slots = inp["proposed_slots"]
         self.state = NegotiationState.PROPOSING
-        
-        # Simulate sending proposal
         self.negotiation_history.append({
-            "round": 1,
-            "action": "proposal_sent",
-            "proposal": proposal,
+            "action": "times_proposed",
+            "slots": slots,
             "timestamp": datetime.now().isoformat()
         })
-        
-        # Simulate responses (in real implementation, would wait for actual responses)
-        responses = self._simulate_responses(request, proposal)
-        
-        # Analyze responses and decide next action
-        next_action = await self._analyze_responses(client, request, proposal, responses)
-        
-        if next_action["action"] == "confirm":
-            # Book resources
-            room = await self._book_meeting_room(request, proposal["primary_slot"])
-            zoom = await self._create_zoom_link(request)
-            
-            # Send confirmation
-            confirmation = await self._send_confirmation(client, request, proposal, room, zoom)
-            
-            self.state = NegotiationState.CONFIRMED
-            
-            return {
-                "state": "confirmed",
-                "meeting_time": proposal["primary_slot"],
-                "room": room,
-                "zoom_link": zoom,
-                "confirmation": confirmation,
-                "negotiation_rounds": len(self.negotiation_history)
-            }
-        
-        elif next_action["action"] == "renegotiate":
-            self.state = NegotiationState.NEGOTIATING
-            
-            # Generate new proposal based on feedback
-            new_proposal = await self._create_counter_proposal(
-                client, request, proposal, responses, next_action
-            )
-            
-            return {
-                "state": "negotiating",
-                "new_proposal": new_proposal,
-                "reason": next_action["reason"],
-                "negotiation_rounds": len(self.negotiation_history)
-            }
-        
-        else:
-            self.state = NegotiationState.FAILED
-            return {
-                "state": "failed",
-                "reason": next_action["reason"]
-            }
-    
-    async def _analyze_responses(self, client, request: MeetingRequest, proposal: Dict, responses: List[Dict]) -> Dict:
-        """Analyze participant responses and decide next action."""
-        
-        responses_str = json.dumps(responses, indent=2)
-        
-        prompt = f"""Analyze these responses to the meeting proposal and decide next action:
+        return {
+            "status": "recorded",
+            "slots_proposed": len(slots),
+            "top_slot": slots[0] if slots else None
+        }
 
-Original proposal: {json.dumps(proposal, indent=2)}
+    def _tool_send_proposal_email(self, inp: Dict) -> Dict:
+        """Send proposal email; falls back to mock if SMTP is not configured."""
+        to = inp["to"]
+        subject = inp["subject"]
+        body = inp["body"]
 
-Responses:
-{responses_str}
+        result = self._send_email(to, subject, body)
+        if result.get("sent"):
+            return result
 
-Decide:
-1. Can we confirm the meeting? (all accepted or enough key people)
-2. Should we renegotiate? (conflicts or better options suggested)
-3. Should we escalate? (deadline approaching, no consensus)
+        # Mock fallback
+        self.negotiation_history.append({
+            "action": "proposal_email_sent",
+            "to": to,
+            "subject": subject,
+            "timestamp": datetime.now().isoformat()
+        })
+        return {
+            "sent": True,
+            "mock": True,
+            "message_id": f"mock_msg_{int(datetime.now().timestamp())}",
+            "recipients": to,
+            "note": "Email simulated (SMTP not configured). In production, participants would receive this email."
+        }
 
-Return JSON:
-{{
-    "action": "confirm|renegotiate|escalate",
-    "reason": "explanation",
-    "key_insights": ["what we learned from responses"],
-    "recommended_next_steps": ["specific actions to take"]
-}}"""
+    def _tool_book_meeting_room(self, inp: Dict) -> Dict:
+        """Book a meeting room; falls back to mock if Google Calendar resources are not configured."""
+        start = inp["start"]
+        end = inp["end"]
+        attendee_count = inp["attendee_count"]
+        room_prefs = inp.get("room_preferences", "")
 
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1000,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        
-        response = message.content[0].text
-        
-        if "```json" in response:
-            json_start = response.find("```json") + 7
-            json_end = response.find("```", json_start)
-            response = response[json_start:json_end].strip()
-        
-        return json.loads(response)
-    
-    async def _create_counter_proposal(self, client, request: MeetingRequest, 
-                                      original: Dict, responses: List[Dict], 
-                                      analysis: Dict) -> Dict:
-        """Create intelligent counter-proposal based on feedback."""
-        
-        prompt = f"""Create a counter-proposal based on this feedback:
+        # Try real booking
+        try:
+            slot = {"start": start, "end": end}
+            # Build a minimal MeetingRequest-like object for the real method
+            result = self._book_meeting_room_real(slot)
+            if result.get("booked") is not False:
+                return result
+        except Exception:
+            pass
 
-Original proposal: {json.dumps(original, indent=2)}
-Responses: {json.dumps(responses, indent=2)}
-Analysis: {json.dumps(analysis, indent=2)}
+        # Mock fallback
+        room_name = "Conference Room A" if attendee_count <= 6 else "Large Meeting Room B"
+        return {
+            "booked": True,
+            "mock": True,
+            "room_name": room_name,
+            "room_id": f"room_{room_name.lower().replace(' ', '_')}",
+            "capacity": 6 if attendee_count <= 6 else 14,
+            "start": start,
+            "end": end,
+            "amenities": ["whiteboard", "video_screen", "speakerphone"],
+            "note": "Room booking simulated (Google Calendar resources not configured)."
+        }
 
-Generate a new proposal that:
-1. Addresses the main objections
-2. Finds middle ground
-3. Maintains meeting priority
-4. Shows you listened to feedback
+    def _tool_create_zoom_link(self, inp: Dict) -> Dict:
+        """Create a Zoom link; falls back to mock if Zoom API is not configured."""
+        topic = inp["topic"]
+        duration = inp["duration_minutes"]
+        start_time = inp.get("start_time", "")
 
-Return JSON with new proposal details."""
+        # Try real Zoom integration
+        try:
+            zoom_url = self._create_zoom_link_real(topic, duration)
+            if "placeholder" not in zoom_url and "error" not in zoom_url:
+                return {"zoom_link": zoom_url, "topic": topic}
+        except Exception:
+            pass
 
-        message = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1500,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        
-        response = message.content[0].text
-        
-        if "```json" in response:
-            json_start = response.find("```json") + 7
-            json_end = response.find("```", json_start)
-            response = response[json_start:json_end].strip()
-        
-        return json.loads(response)
-    
-    # Tool implementations
-    
+        # Mock fallback
+        mock_id = abs(hash(topic)) % 10000000000
+        return {
+            "zoom_link": f"https://zoom.us/j/{mock_id}",
+            "mock": True,
+            "topic": topic,
+            "duration_minutes": duration,
+            "meeting_id": str(mock_id),
+            "passcode": "123456",
+            "note": "Zoom link simulated (ZOOM_API_KEY not configured)."
+        }
+
+    def _tool_finalize_meeting(self, inp: Dict) -> Dict:
+        """Finalize the meeting: send calendar invites and update state."""
+        title = inp["title"]
+        start = inp["start"]
+        end = inp["end"]
+        attendees = inp["attendees"]
+        zoom_link = inp.get("zoom_link", "")
+        room = inp.get("room", "")
+        notes = inp.get("notes", "")
+
+        self.state = NegotiationState.CONFIRMED
+        self.negotiation_history.append({
+            "action": "meeting_finalized",
+            "title": title,
+            "start": start,
+            "end": end,
+            "attendees": attendees,
+            "zoom_link": zoom_link,
+            "room": room,
+            "timestamp": datetime.now().isoformat()
+        })
+
+        # Try to create a real Google Calendar event
+        try:
+            creds = self._get_google_credentials()
+            if creds:
+                from googleapiclient.discovery import build
+                service = build('calendar', 'v3', credentials=creds)
+                event = {
+                    'summary': title,
+                    'description': f"Zoom: {zoom_link}\nRoom: {room}\n{notes}",
+                    'start': {'dateTime': start, 'timeZone': 'UTC'},
+                    'end': {'dateTime': end, 'timeZone': 'UTC'},
+                    'attendees': [{'email': e} for e in attendees],
+                }
+                created = service.events().insert(
+                    calendarId='primary', body=event, sendUpdates='all'
+                ).execute()
+                return {
+                    "finalized": True,
+                    "event_id": created['id'],
+                    "calendar_invites_sent": True,
+                    "title": title,
+                    "start": start,
+                    "end": end,
+                    "attendees": attendees,
+                    "zoom_link": zoom_link,
+                    "room": room
+                }
+        except Exception:
+            pass
+
+        # Mock fallback
+        return {
+            "finalized": True,
+            "mock": True,
+            "event_id": f"evt_{int(datetime.now().timestamp())}",
+            "calendar_invites_sent": True,
+            "title": title,
+            "start": start,
+            "end": end,
+            "attendees": attendees,
+            "zoom_link": zoom_link,
+            "room": room,
+            "note": "Calendar invites simulated (Google Calendar not configured). In production, all attendees would receive calendar invitations."
+        }
+
+    # -------------------------------------------------------------------------
+    # Helper: find a participant in the current request
+    # -------------------------------------------------------------------------
+
+    def _find_participant(self, email: str) -> Optional[Participant]:
+        """Look up a participant by email in the current meeting request."""
+        if not hasattr(self, '_current_request') or self._current_request is None:
+            return None
+        for p in self._current_request.participants:
+            if p.email == email:
+                return p
+        return None
+
+    # -------------------------------------------------------------------------
+    # Mock availability generator
+    # -------------------------------------------------------------------------
+
+    def _mock_check_availability(self, email: str, range_start: str, range_end: str) -> Dict:
+        """Generate realistic mock availability data."""
+        try:
+            start_dt = datetime.fromisoformat(range_start.replace("Z", "+00:00"))
+            end_dt = datetime.fromisoformat(range_end.replace("Z", "+00:00"))
+        except ValueError:
+            start_dt = datetime.now() + timedelta(days=1)
+            end_dt = start_dt + timedelta(days=3)
+
+        # Generate some plausible busy blocks based on email hash
+        email_hash = hash(email)
+        busy_blocks = []
+        current = start_dt
+        while current < end_dt:
+            # Skip weekends
+            if current.weekday() < 5:
+                # Create 1-2 busy blocks per day based on email hash
+                block_hour = 9 + (abs(email_hash) % 7)
+                block_start = current.replace(hour=block_hour, minute=0, second=0, microsecond=0)
+                block_end = block_start + timedelta(hours=1)
+                if block_start >= start_dt and block_end <= end_dt:
+                    busy_blocks.append({
+                        "start": block_start.isoformat(),
+                        "end": block_end.isoformat()
+                    })
+                # Second block
+                block_hour2 = (block_hour + 3) % 17
+                if block_hour2 >= 9:
+                    block_start2 = current.replace(hour=block_hour2, minute=30, second=0, microsecond=0)
+                    block_end2 = block_start2 + timedelta(minutes=45)
+                    if block_start2 >= start_dt and block_end2 <= end_dt:
+                        busy_blocks.append({
+                            "start": block_start2.isoformat(),
+                            "end": block_end2.isoformat()
+                        })
+            current += timedelta(days=1)
+
+        return {
+            "participant": email,
+            "range_start": range_start,
+            "range_end": range_end,
+            "busy_blocks": busy_blocks,
+            "free_windows_hint": "Available outside of the listed busy blocks during business hours.",
+            "mock": True,
+            "note": "Availability simulated (Google Calendar not configured)."
+        }
+
+    # -------------------------------------------------------------------------
+    # Real integration methods (kept from original)
+    # -------------------------------------------------------------------------
+
     def _check_availability(self, participant: Participant, time_range: tuple) -> Dict:
         """Check participant availability via Google Calendar."""
         try:
             from google.oauth2.credentials import Credentials
             from googleapiclient.discovery import build
-            
-            # Load credentials (user must set up OAuth)
+
             creds = self._get_google_credentials()
             if not creds:
                 return {"available": True, "note": "Calendar access not configured"}
-            
+
             service = build('calendar', 'v3', credentials=creds)
-            
-            # Query free/busy
+
             body = {
-                "timeMin": time_range[0].isoformat(),
-                "timeMax": time_range[1].isoformat(),
+                "timeMin": time_range[0] if isinstance(time_range[0], str) else time_range[0].isoformat(),
+                "timeMax": time_range[1] if isinstance(time_range[1], str) else time_range[1].isoformat(),
                 "items": [{"id": participant.email}]
             }
-            
+
             result = service.freebusy().query(body=body).execute()
             busy = result['calendars'].get(participant.email, {}).get('busy', [])
-            
+
             return {
                 "available": len(busy) == 0,
                 "conflicts": busy,
@@ -433,214 +624,121 @@ Return JSON with new proposal details."""
             }
         except Exception as e:
             return {"available": True, "note": f"Calendar check failed: {e}"}
-    
-    def _propose_time(self, slot: TimeSlot, participants: List[Participant]) -> Dict:
-        """Propose time to participants via email."""
-        try:
-            import smtplib
-            from email.mime.text import MIMEText
-            from email.mime.multipart import MIMEMultipart
-            
-            smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-            smtp_port = int(os.getenv("SMTP_PORT", "587"))
-            smtp_user = os.getenv("SMTP_USER")
-            smtp_pass = os.getenv("SMTP_PASSWORD")
-            
-            if not smtp_user or not smtp_pass:
-                return {"sent": False, "note": "SMTP credentials not configured"}
-            
-            msg = MIMEMultipart()
-            msg['From'] = smtp_user
-            msg['To'] = ", ".join([p.email for p in participants])
-            msg['Subject'] = "Meeting Time Proposal"
-            
-            body = f"""
-Proposed meeting time:
-Start: {slot.start}
-End: {slot.end}
 
-Please reply with your availability.
-"""
-            msg.attach(MIMEText(body, 'plain'))
-            
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()
-                server.login(smtp_user, smtp_pass)
-                server.send_message(msg)
-            
-            return {
-                "sent": True,
-                "recipients": [p.email for p in participants]
-            }
-        except Exception as e:
-            return {"sent": False, "error": str(e)}
-    
     def _send_email(self, to: List[str], subject: str, body: str) -> Dict:
         """Send email via SMTP."""
         try:
             import smtplib
             from email.mime.text import MIMEText
             from email.mime.multipart import MIMEMultipart
-            
+
             smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
             smtp_port = int(os.getenv("SMTP_PORT", "587"))
             smtp_user = os.getenv("SMTP_USER")
             smtp_pass = os.getenv("SMTP_PASSWORD")
-            
+
             if not smtp_user or not smtp_pass:
                 return {"sent": False, "note": "SMTP credentials not configured"}
-            
+
             msg = MIMEMultipart()
             msg['From'] = smtp_user
             msg['To'] = ", ".join(to)
             msg['Subject'] = subject
             msg.attach(MIMEText(body, 'plain'))
-            
+
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.starttls()
                 server.login(smtp_user, smtp_pass)
                 server.send_message(msg)
-            
+
             return {
                 "sent": True,
                 "message_id": f"msg_{datetime.now().timestamp()}"
             }
         except Exception as e:
             return {"sent": False, "error": str(e)}
-    
-    async def _book_meeting_room(self, request: MeetingRequest, slot: Dict) -> Dict:
+
+    def _book_meeting_room_real(self, slot: Dict) -> Dict:
         """Book meeting room via Google Calendar resource."""
         try:
             from google.oauth2.credentials import Credentials
             from googleapiclient.discovery import build
-            
+
             creds = self._get_google_credentials()
             if not creds:
                 return {"booked": False, "note": "Calendar access not configured"}
-            
+
             service = build('calendar', 'v3', credentials=creds)
-            
-            # List available rooms
+
             resources = service.resources().calendars().list(
                 customer='my_customer'
             ).execute()
-            
-            # Book first available room
+
             if resources.get('items'):
                 room = resources['items'][0]
                 return {
+                    "booked": True,
                     "room_id": room['resourceId'],
                     "room_name": room['resourceName'],
                     "capacity": room.get('capacity', 10),
                     "amenities": room.get('featureInstances', [])
                 }
-            
+
             return {"booked": False, "note": "No rooms available"}
         except Exception as e:
             return {"booked": False, "error": str(e)}
-    
-    async def _create_zoom_link(self, request: MeetingRequest) -> str:
+
+    def _create_zoom_link_real(self, topic: str, duration_minutes: int) -> str:
         """Create Zoom meeting via API."""
         try:
             import requests
-            
+
             zoom_api_key = os.getenv("ZOOM_API_KEY")
             zoom_api_secret = os.getenv("ZOOM_API_SECRET")
-            
+
             if not zoom_api_key or not zoom_api_secret:
                 return "https://zoom.us/j/placeholder (Configure ZOOM_API_KEY)"
-            
-            # Generate JWT token
+
             import jwt
             import time
-            
+
             payload = {
                 'iss': zoom_api_key,
                 'exp': time.time() + 3600
             }
             token = jwt.encode(payload, zoom_api_secret, algorithm='HS256')
-            
-            # Create meeting
+
             headers = {
                 'Authorization': f'Bearer {token}',
                 'Content-Type': 'application/json'
             }
-            
+
             data = {
-                'topic': request.title,
-                'type': 2,  # Scheduled meeting
-                'duration': request.duration_minutes,
+                'topic': topic,
+                'type': 2,
+                'duration': duration_minutes,
                 'settings': {
                     'host_video': True,
                     'participant_video': True,
                     'join_before_host': False
                 }
             }
-            
+
             response = requests.post(
                 'https://api.zoom.us/v2/users/me/meetings',
                 headers=headers,
                 json=data
             )
-            
+
             if response.status_code == 201:
                 meeting = response.json()
                 return meeting['join_url']
-            
+
             return f"https://zoom.us/j/error_{response.status_code}"
-            
+
         except Exception as e:
             return f"https://zoom.us/j/error (Setup required: {e})"
-    
-    async def _send_confirmation(self, client, request: MeetingRequest, 
-                                 proposal: Dict, room: Dict, zoom: str) -> Dict:
-        """Send meeting confirmation with calendar invite."""
-        try:
-            from google.oauth2.credentials import Credentials
-            from googleapiclient.discovery import build
-            
-            creds = self._get_google_credentials()
-            if not creds:
-                return {"sent": False, "note": "Calendar access not configured"}
-            
-            service = build('calendar', 'v3', credentials=creds)
-            
-            # Create calendar event
-            event = {
-                'summary': request.title,
-                'description': f"Zoom: {zoom}\nRoom: {room.get('room_name', 'TBD')}",
-                'start': {
-                    'dateTime': proposal['primary_slot']['start'],
-                    'timeZone': 'UTC',
-                },
-                'end': {
-                    'dateTime': proposal['primary_slot']['end'],
-                    'timeZone': 'UTC',
-                },
-                'attendees': [{'email': p.email} for p in request.participants],
-                'conferenceData': {
-                    'createRequest': {
-                        'requestId': f"meeting_{datetime.now().timestamp()}"
-                    }
-                }
-            }
-            
-            event = service.events().insert(
-                calendarId='primary',
-                body=event,
-                conferenceDataVersion=1,
-                sendUpdates='all'
-            ).execute()
-            
-            return {
-                "sent": True,
-                "calendar_invites": "sent",
-                "event_id": event['id'],
-                "includes": ["zoom_link", "room_details", "agenda"]
-            }
-        except Exception as e:
-            return {"sent": False, "error": str(e)}
-    
+
     def _get_google_credentials(self):
         """Get Google OAuth credentials."""
         try:
@@ -649,16 +747,14 @@ Please reply with your availability.
             from google_auth_oauthlib.flow import InstalledAppFlow
             import pickle
             import os.path
-            
+
             SCOPES = ['https://www.googleapis.com/auth/calendar']
             creds = None
-            
-            # Load saved credentials
+
             if os.path.exists('token.pickle'):
                 with open('token.pickle', 'rb') as token:
                     creds = pickle.load(token)
-            
-            # Refresh or get new credentials
+
             if not creds or not creds.valid:
                 if creds and creds.expired and creds.refresh_token:
                     creds.refresh(Request())
@@ -666,53 +762,129 @@ Please reply with your availability.
                     flow = InstalledAppFlow.from_client_secrets_file(
                         'credentials.json', SCOPES)
                     creds = flow.run_local_server(port=0)
-                    
-                    # Save credentials
                     with open('token.pickle', 'wb') as token:
                         pickle.dump(creds, token)
                 else:
                     return None
-            
+
             return creds
         except Exception as e:
             print(f"Google auth error: {e}")
             return None
-    
-    def _simulate_responses(self, request: MeetingRequest, proposal: Dict) -> List[Dict]:
-        """Simulate participant responses (for demo)."""
-        return [
-            {
-                "participant": request.participants[0].email,
-                "response": "accepted",
-                "message": "Works for me!"
-            },
-            {
-                "participant": request.participants[1].email if len(request.participants) > 1 else "other@example.com",
-                "response": "accepted",
-                "message": "Confirmed"
+
+    # -------------------------------------------------------------------------
+    # The agentic loop
+    # -------------------------------------------------------------------------
+
+    def negotiate_meeting(self, request: MeetingRequest, max_iterations: int = 20) -> Dict:
+        """
+        Run the agentic negotiation loop. The LLM autonomously decides which
+        tools to call, observes results, and continues until the meeting is
+        scheduled or it determines scheduling has failed.
+        """
+        self._current_request = request
+
+        if not self.api_key:
+            return self._mock_negotiation(request)
+
+        try:
+            import anthropic
+        except ImportError:
+            return {
+                "error": "The 'anthropic' package is required. Install it with: pip install anthropic",
+                "state": "failed"
             }
-        ]
-    
-    def _analyze_preferences(self, participants: List[Participant]) -> Dict:
-        """Analyze participant preferences."""
+
+        client = anthropic.Anthropic(api_key=self.api_key)
+
+        # Build the initial task description
+        participants_desc = "\n".join([
+            f"  - {p.name} <{p.email}> | Timezone: {p.timezone} | Preferences: {json.dumps(p.preferences)}"
+            for p in request.participants
+        ])
+
+        task_description = (
+            f"Please schedule the following meeting:\n\n"
+            f"Title: {request.title}\n"
+            f"Duration: {request.duration_minutes} minutes\n"
+            f"Priority: {request.priority.value}\n"
+            f"Deadline to schedule by: {request.deadline.isoformat() if request.deadline else 'None'}\n"
+            f"Meeting preferences: {json.dumps(request.preferences)}\n\n"
+            f"Participants:\n{participants_desc}\n\n"
+            f"Today's date is {datetime.now().strftime('%Y-%m-%d')}. "
+            f"Please find a time that works for everyone within the next 5 business days, "
+            f"book any required resources, and finalize the meeting."
+        )
+
+        messages = [{"role": "user", "content": task_description}]
+
+        print(f"[Agent] Starting negotiation for: {request.title}")
+        print(f"[Agent] Participants: {', '.join(p.name for p in request.participants)}")
+        print()
+
+        final_text = ""
+
+        for iteration in range(1, max_iterations + 1):
+            print(f"[Agent] Iteration {iteration}/{max_iterations}")
+
+            response = client.messages.create(
+                model="claude-sonnet-4-5-20250929",
+                max_tokens=4096,
+                system=SYSTEM_PROMPT,
+                tools=self._get_tool_definitions(),
+                messages=messages
+            )
+
+            # Append the assistant's response to the conversation
+            messages.append({"role": "assistant", "content": response.content})
+
+            # Extract any text blocks for logging
+            for block in response.content:
+                if hasattr(block, "text"):
+                    final_text = block.text
+                    print(f"[Agent] {block.text[:200]}{'...' if len(block.text) > 200 else ''}")
+
+            # If the model decided to stop, we are done
+            if response.stop_reason == "end_turn":
+                print(f"[Agent] Completed after {iteration} iteration(s).")
+                break
+
+            # Process tool calls
+            if response.stop_reason == "tool_use":
+                tool_results = []
+                for block in response.content:
+                    if block.type == "tool_use":
+                        print(f"[Tool] Calling: {block.name}({json.dumps(block.input, default=str)[:120]}...)")
+                        result = self._execute_tool(block.name, block.input)
+                        print(f"[Tool] Result: {json.dumps(result, default=str)[:200]}")
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": json.dumps(result, default=str) if isinstance(result, dict) else str(result)
+                        })
+
+                messages.append({"role": "user", "content": tool_results})
+        else:
+            # Reached max iterations without end_turn
+            print(f"[Agent] Reached maximum iterations ({max_iterations}).")
+            self.state = NegotiationState.FAILED
+
         return {
-            "common_windows": ["9am-11am PST", "2pm-4pm PST"],
-            "timezone_spread": "8 hours",
-            "flexibility_score": 0.7
+            "state": self.state.value,
+            "negotiation_history": self.negotiation_history,
+            "iterations": min(iteration, max_iterations) if 'iteration' in dir() else max_iterations,
+            "final_message": final_text,
         }
-    
-    def _resolve_conflicts(self, conflicts: List[Dict]) -> Dict:
-        """Resolve scheduling conflicts."""
-        return {
-            "resolution": "propose_alternative",
-            "alternatives": []
-        }
-    
+
+    # -------------------------------------------------------------------------
+    # Mock negotiation for when API key is missing
+    # -------------------------------------------------------------------------
+
     def _mock_negotiation(self, request: MeetingRequest) -> Dict:
         """Mock negotiation when API not available."""
         return {
             "state": "mock",
-            "message": "Set ANTHROPIC_API_KEY to enable real negotiation",
+            "message": "Set ANTHROPIC_API_KEY to enable real agentic negotiation",
             "mock_result": {
                 "proposed_time": (datetime.now() + timedelta(days=1)).isoformat(),
                 "participants_notified": len(request.participants),
@@ -720,13 +892,18 @@ Please reply with your availability.
             }
         }
 
+
+# =============================================================================
+# Main
+# =============================================================================
+
 def main():
-    """Demo the calendar negotiation agent."""
-    
-    print("📅 CALENDAR NEGOTIATION AGENT")
+    """Run the calendar negotiation agent."""
+
+    print("CALENDAR NEGOTIATION AGENT")
     print("=" * 70)
     print()
-    
+
     # Create meeting request
     request = MeetingRequest(
         title="Q1 Planning Session",
@@ -759,29 +936,37 @@ def main():
             "room_needed": True
         }
     )
-    
-    print("📋 Meeting Request:")
+
+    print("Meeting Request:")
     print(f"  Title: {request.title}")
     print(f"  Duration: {request.duration_minutes} minutes")
     print(f"  Participants: {len(request.participants)}")
+    for p in request.participants:
+        print(f"    - {p.name} ({p.timezone})")
     print(f"  Priority: {request.priority.value}")
+    print(f"  Video required: {request.preferences.get('video_required')}")
+    print(f"  Room needed: {request.preferences.get('room_needed')}")
     print()
-    
+
     # Run negotiation
     agent = CalendarNegotiationAgent()
-    
-    print("🤖 Agent analyzing constraints and negotiating...")
+
+    print("Starting agentic negotiation loop...")
+    print("-" * 70)
     print()
-    
-    import asyncio
-    result = asyncio.run(agent.negotiate_meeting(request))
-    
-    print("📊 NEGOTIATION RESULT:")
+
+    result = agent.negotiate_meeting(request)
+
+    print()
+    print("-" * 70)
+    print("NEGOTIATION RESULT:")
     print("=" * 70)
     print(json.dumps(result, indent=2, default=str))
-    
+
     print()
-    print("✅ Negotiation complete!")
+    print(f"Final state: {result.get('state', 'unknown')}")
+    print("Negotiation complete.")
+
 
 if __name__ == "__main__":
     main()
